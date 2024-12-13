@@ -33,6 +33,13 @@ struct Line
 	u8 b; // End point index
 };
 
+struct Vector3D
+{
+	u8 x;
+	u8 y;
+	u8 z;
+};
+
 struct Mesh
 {
 	const struct Point* Points;
@@ -44,7 +51,7 @@ struct Mesh
 struct Object
 {
 	u8 ID;
-	struct Point Position;
+	struct Vector3D Position;
 	const struct Mesh* Shape;
 	struct VDP_Command36* Back[2];
 };
@@ -293,7 +300,7 @@ void Object_Draw(struct Object* obj, u8 color)
 	const struct Line* line = mesh->Lines;
 	struct VDP_Command36* cmd = obj->Back[g_DrawPage];
 	u8 objPosX = obj->Position.x;
-	u8 objPosY = obj->Position.y + 64;
+	u8 objPosY = obj->Position.y;
 	for (u8 i = 0; i < mesh->LineNum; i++)
 	{
 		u16 x1 = objPosX + pt[line->a].x;
@@ -484,7 +491,8 @@ void main()
 		loop(i, OBJ_NUM)
 		{
 			o->Position.x--;
-			o->Position.y = 64 + (((i16)g_Sinus64[(i + g_FrameCount) % 64]) / 256);
+			o->Position.y = 128 + (((i16)g_Sinus64[(i + g_FrameCount) % 64]) / 256);
+			o->Position.z = 128 + (((i16)g_Sinus64[(g_FrameCount) % 64]) / 256);
 
 			Object_Draw(o, g_FrameCount & 0b0100000 ? COLOR_LIGHT_RED : COLOR_LIGHT_GREEN);
 			o++;
