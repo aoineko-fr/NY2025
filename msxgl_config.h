@@ -394,7 +394,7 @@
 #define PSG_CHIP					PSG_INTERNAL
 // - PSG_DIRECT ................... Function set directly the PSG registers
 // - PSG_INDIRECT ................. Function set a buffer (Apply() function must be call once a frame)
-#define PSG_ACCESS					PSG_INDIRECT
+#define PSG_ACCESS					PSG_DIRECT
 #define PSG_USE_NOTES				FALSE	// Add notes table to convert note to tone
 #define PSG_USE_EXTRA				TRUE	// Add helper functions to handle PSG settings
 #define PSG_USE_RESUME				TRUE	// Add function to allow playback pause and resume
@@ -441,9 +441,9 @@
 
 // LVGM replayer options
 #define LVGM_USE_PSG				TRUE	// Add parser for PSG data
-#define LVGM_USE_MSXMUSIC			TRUE	// Add parser for MSX-Music data
-#define LVGM_USE_MSXAUDIO			TRUE	// Add parser for MSX-Audio data
-#define LVGM_USE_SCC				TRUE	// Add parser for Konami SCC data
+#define LVGM_USE_MSXMUSIC			FALSE	// Add parser for MSX-Music data
+#define LVGM_USE_MSXAUDIO			FALSE	// Add parser for MSX-Audio data
+#define LVGM_USE_SCC				FALSE	// Add parser for Konami SCC data
 #define LVGM_USE_SCCI				FALSE	// Add parser for Konami SCC+ data
 #define LVGM_USE_PSG2				FALSE	// Add parser for secondary PSG data
 #define LVGM_USE_OPL4				FALSE	// Add parser for OPL4 data

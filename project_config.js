@@ -42,7 +42,7 @@ ProjModules = [ ProjName ];
 // ProjSegments = "";
 
 //-- List of library modules to build (array)
-LibModules = [ "math", "draw", "system", "bios", "vdp", "print", "input", "memory" ];
+LibModules = [ "psg", "vgm/lvgm_player", "math", "draw", "system", "bios", "vdp", "print", "input", "memory" ];
 
 //-- Additional sources to be compiled and linked with the project (array)
 // AddSources = [];
@@ -84,10 +84,10 @@ Machine = "2";
 //   - ROM_KONAMI_SCC   .rom    Konami MegaROM SCC (aka Konami5): 8 KB segments for a total of 64 KB to 2 MB
 //   - ROM_NEO8         .rom    NEO-8: 8 KB segments for a total of 1 MB to 32 MB
 //   - ROM_NEO16        .rom    NEO-16: 16 KB segments for a total of 1 MB to 64 MB
-Target = "ROM_48K_ISR";
+Target = "ROM_ASCII8";
 
 //-- ROM mapper total size in KB (number). Must be a multiple of 8 or 16 depending on the mapper type (from 64 to 4096)
-// ROMSize = 128;
+ROMSize = 256;
 
 //-- Postpone the ROM startup to let the other ROMs initialize like Disk controller or Network cartridge (boolean)
 // ROMDelayBoot = false;
@@ -96,7 +96,7 @@ Target = "ROM_48K_ISR";
 AddROMSignature = true;
 
 //-- Select RAM in slot 0 and install ISR there (boolean). For MSX with at least 64 KB of RAM
-// InstallRAMISR = false;
+InstallRAMISR = "RAM0_SEGMENT";
 
 //-- Type of custom ISR to install (string). ISR is install in RAM or ROM depending on Target and InstallRAMISR parameters
 //   - NONE       No ISR
@@ -110,6 +110,11 @@ CustomISR = "VHBLANK";
 
 //-- Overwrite RAM starting address (number). For example. 0xE0000 for 8K RAM machine
 // ForceRamAddr = 0;
+
+//-- List of raw data files to be added to final binary (array). Each entry must be in the following format: { offset:0x0000, file:"myfile.bin" }
+RawFiles = [
+    { segment: 8, file:"content/mt_proj256.bin"},
+];
 
 //-- List of data files to copy to disk (array)
 // DiskFiles = [];

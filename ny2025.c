@@ -1,10 +1,22 @@
 // ____________________________
-// ██▀▀█▀▀██▀▀▀▀▀▀▀█▀▀█        │   ▄▄▄                ▄▄      
-// ██  ▀  █▄  ▀██▄ ▀ ▄█ ▄▀▀ █  │  ▀█▄  ▄▀██ ▄█▄█ ██▀▄ ██  ▄███
-// █  █ █  ▀▀  ▄█  █  █ ▀▄█ █▄ │  ▄▄█▀ ▀▄██ ██ █ ██▀  ▀█▄ ▀█▄▄
-// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀────────┘                 ▀▀
-//  Program template
+// ██▀▀█▀▀██▀▀▀▀▀▀▀█▀▀█        │
+// ██  ▀  █▄  ▀██▄ ▀ ▄█ ▄▀▀ █  │
+// █  █ █  ▀▀  ▄█  █  █ ▀▄█ █▄ │
+// ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀────────┘
+//  New Year 2025 demo
 //─────────────────────────────────────────────────────────────────────────────
+
+// Segment		Content
+//------------------------------------
+// 0-3			Main program
+//------------------------------------
+// 4-5			Page #0
+//------------------------------------
+// 6-7			(empty)
+//------------------------------------
+// 8-15			Proj 3D
+//------------------------------------
+// 16-31		(empty)
 
 //=============================================================================
 // INCLUDES
@@ -13,6 +25,8 @@
 #include "color.h"
 #include "draw.h"
 #include "memory.h"
+#include "psg.h"
+#include "vgm/lvgm_player.h"
 
 //=============================================================================
 // DEFINES
@@ -53,7 +67,8 @@ struct Object
 	u8 ID;
 	struct Vector3D Position;
 	const struct Mesh* Shape;
-	struct VDP_Command36* Back[2];
+	struct VDP_Command36* RenderBuffer[2];
+	struct Point* Projected; 
 };
 
 // 3D letter points
@@ -77,7 +92,7 @@ struct Object
 // #define ADDR_SPT			0x7800
 // #define ADDR_SAT2			0xA200
 
-#define HBANK_LINE_LOW				209
+#define HBANK_LINE_LOW				208
 #define HBANK_LINE_HIGH				240
 
 //=============================================================================
@@ -87,8 +102,11 @@ struct Object
 // Fonts data
 #include "font/font_mgl_sample6.h"
 
-// Fonts data
+// 
 #include "mathtable/mt_trigo_64.inc"
+
+// 
+#include "content/lvgm_psg_honotori_09.h"
 
 // Animation characters
 const u8 g_ChrAnim[] = { '-', '/', '|', '\\' };
@@ -138,8 +156,26 @@ const struct Mesh g_MeshY = { g_PointsY, numberof(g_PointsY), g_LinesY, numberof
 //.............................................................................
 //	W
 const struct Point g_PointsW[] = { { W0, H4 }, { W1, H0 }, { W2, H2 }, { W3, H0 }, { W4, H4 } };
-const struct Line g_LinesW[] = { { 0, 1 }, { 1, 2 }, { 2, 3 } , { 3, 4 }  };
+const struct Line g_LinesW[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }  };
 const struct Mesh g_MeshW = { g_PointsW, numberof(g_PointsW), g_LinesW, numberof(g_LinesW) };
+
+//.............................................................................
+//	0
+const struct Point g_Points0[] = { { W0, H1 }, { W0, H3 }, { W1, H4 }, { W3, H4 }, { W4, H3 }, { W4, H1 }, { W3, H0 }, { W1, H0 } };
+const struct Line g_Lines0[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 0 }  };
+const struct Mesh g_Mesh0 = { g_Points0, numberof(g_Points0), g_Lines0, numberof(g_Lines0) };
+
+//.............................................................................
+//	2
+const struct Point g_Points2[] = { { W4, H0 }, { W0, H0 }, { W4, H3 }, { W3, H4 }, { W1, H4 }, { W0, H3 } };
+const struct Line g_Lines2[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }  };
+const struct Mesh g_Mesh2 = { g_Points2, numberof(g_Points2), g_Lines2, numberof(g_Lines2) };
+
+//.............................................................................
+//	5
+const struct Point g_Points5[] = { { W0, H0 }, { W2, H0 }, { W4, H1 }, { W2, H2 }, { W0, H2 }, { W0, H4 }, { W4, H4 } };
+const struct Line g_Lines5[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
+const struct Mesh g_Mesh5 = { g_Points5, numberof(g_Points5), g_Lines5, numberof(g_Lines5) };
 
 // Snow flakes
 #include "content/sprt_snow.h"
@@ -152,6 +188,8 @@ const i8 g_FallOffset[] =
 	-2,	-2,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	-1,	0,	-1,	0,	-1,	0,	0,
 	0,	0,	0,	1,	0,	1,	0,	1,	1,	1,	1,	1,	1,	1,	1,	2
 };
+
+const i16 g_ProjTable[] = { 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 3, 3, 2, 2, 2 };
 
 //=============================================================================
 // VARIABLES
@@ -167,6 +205,7 @@ u8 g_FrameCount = 0;
 u8 g_ShowPage = 0;
 u8 g_DrawPage = 1;
 u8 g_State = 0;
+bool g_MusicPlay = FALSE;
 
 //=============================================================================
 // FUNCTIONS
@@ -204,6 +243,9 @@ void VDP_InterruptHandler()
 	VDP_SetColor(COLOR_WHITE);
 	g_VSynch = TRUE;
 	g_FrameCount++;
+
+	if (g_MusicPlay)
+		LVGM_Decode();
 }
 
 //-----------------------------------------------------------------------------
@@ -264,20 +306,21 @@ void CommandWait() //__PRESERVES(c, d, e, h, l, iyl, iyh)
 void Object_Init(struct Object* obj)
 {
 	const struct Mesh* mesh = obj->Shape;
-	const struct Point* pt = mesh->Points;
-	const struct Line* line = mesh->Lines;
+	// const struct Point* pt = mesh->Points;
+	// const struct Line* line = mesh->Lines;
 
 	loop(i, 2)
-		obj->Back[i] = (struct VDP_Command36*)Mem_HeapAlloc(mesh->LineNum * sizeof(struct VDP_Command36));
+		obj->RenderBuffer[i] = (struct VDP_Command36*)Mem_HeapAlloc(mesh->LineNum * sizeof(struct VDP_Command36));
+
+	obj->Projected = (struct Point*)Mem_HeapAlloc(mesh->PointNum * sizeof(struct Point));
 }
 
 //-----------------------------------------------------------------------------
 // Draw an object
 u8 Object_Clear(struct Object* obj)
 {
-	// obj;
 	const struct Mesh* mesh = obj->Shape;
-	struct VDP_Command36* cmd = obj->Back[g_DrawPage];
+	struct VDP_Command36* cmd = obj->RenderBuffer[g_DrawPage];
 	for (u8 i = 0; i < mesh->LineNum; i++)
 	{
 		cmd->CLR = COLOR_TRANSPARENT;
@@ -296,17 +339,37 @@ void Object_Draw(struct Object* obj, u8 color)
 	g_VDP_Command.CMD = VDP_CMD_LINE;
 
 	const struct Mesh* mesh = obj->Shape;
+	i16 objPosX = obj->Position.x;
+	i16 objPosY = obj->Position.y;
+	i16 objPosZ = obj->Position.z;
+
+	// Do screen projection
 	const struct Point* pt = mesh->Points;
+	struct Point* proj = obj->Projected;
+	for (u8 i = 0; i < mesh->PointNum; i++)
+	{
+		i16 x1 = objPosX + pt->x;
+		i16 y1 = objPosY - pt->y;
+		i16 z1 = objPosZ - 0;
+		u8 seg = 8 + ((u8)z1 / 32);
+		SET_BANK_SEGMENT(3, seg);
+		proj->x = PEEK(0xA000 + (z1 & 0x1F) * 256 + x1);
+		proj->y = PEEK(0xA000 + (z1 & 0x1F) * 256 + y1);
+		pt++;
+		proj++;
+	}
+
+	// Do screen projection
 	const struct Line* line = mesh->Lines;
-	struct VDP_Command36* cmd = obj->Back[g_DrawPage];
-	u8 objPosX = obj->Position.x;
-	u8 objPosY = obj->Position.y;
+	struct VDP_Command36* cmd = obj->RenderBuffer[g_DrawPage];
 	for (u8 i = 0; i < mesh->LineNum; i++)
 	{
-		u16 x1 = objPosX + pt[line->a].x;
-		u8 y1 = objPosY - pt[line->a].y;
-		u16 x2 = objPosX + pt[line->b].x;
-		u8 y2 = objPosY - pt[line->b].y;
+		const struct Point* pt1 = &obj->Projected[line->a];
+		i16 x1 = pt1->x;
+		i16 y1 = pt1->y;
+		const struct Point* pt2 = &obj->Projected[line->b];
+		i16 x2 = pt2->x;
+		i16 y2 = pt2->y;
 
 		u16 dx, dy, nx, ny;
 		u8 arg = 0;
@@ -350,7 +413,7 @@ void Object_Draw(struct Object* obj, u8 color)
 		g_VDP_Command.NX = nx;
 		g_VDP_Command.NY = ny;
 		g_VDP_Command.ARG = arg;
-		// CommandWait();
+		CommandWait();
 		Object_DrawCommand((const void*)((u16)g_VDP_Command + 4));
 
 		Mem_Copy((const void*)((u16)g_VDP_Command + 4), (void*)cmd, sizeof(struct VDP_Command36));
@@ -375,7 +438,7 @@ void InitializeSprite()
 		while (sprt->Y > 212 + 16)
 			sprt->Y = Math_GetRandom8();
 		sprt->Y -= 16;
-		sprt->Pattern = (j % 4) * 4;
+		sprt->Pattern = (j & 0x03) * 4;
 		sprt->Color = j < 24 ? COLOR_WHITE : COLOR_GRAY;
 		VDP_SetSpriteExUniColor(j, sprt->X, sprt->Y, sprt->Pattern, sprt->Color);
 	}
@@ -431,7 +494,7 @@ void main()
 	Print_DrawTextAt(0, 0, MSX_GL);
 	Print_DrawTextAt(0, 256, MSX_GL);
 
-	#define OBJ_NUM 8
+	#define OBJ_NUM 16
 	struct Object obj[OBJ_NUM] = {
 		{ 0, { 32 + 25 * 0, 32 }, &g_MeshH },
 		{ 1, { 32 + 25 * 1, 32 }, &g_MeshA },
@@ -443,15 +506,15 @@ void main()
 		{ 6, { 32 + 25 * 7, 32 }, &g_MeshE },
 		{ 7, { 32 + 25 * 8, 32 }, &g_MeshW },
 
-		// {  8, { 32 + 25 * 0, 32 }, &g_MeshY },
-		// {  9, { 32 + 25 * 1, 32 }, &g_MeshE },
-		// { 10, { 32 + 25 * 2, 32 }, &g_MeshA },
-		// { 11, { 32 + 25 * 3, 32 }, &g_MeshR },
+		{  8, { 32 + 25 * 0, 160 }, &g_MeshY },
+		{  9, { 32 + 25 * 1, 160 }, &g_MeshE },
+		{ 10, { 32 + 25 * 2, 160 }, &g_MeshA },
+		{ 11, { 32 + 25 * 3, 160 }, &g_MeshR },
 
-		// { 12, { 32 + 25 * 0, 32 }, &g_Mesh2 },
-		// { 13, { 32 + 25 * 1, 32 }, &g_Mesh0 },
-		// { 14, { 32 + 25 * 2, 32 }, &g_Mesh2 },
-		// { 15, { 32 + 25 * 3, 32 }, &g_Mesh5 },
+		{ 12, { 32 + 25 * 5, 160 }, &g_Mesh2 },
+		{ 13, { 32 + 25 * 6, 160 }, &g_Mesh0 },
+		{ 14, { 32 + 25 * 7, 160 }, &g_Mesh2 },
+		{ 15, { 32 + 25 * 8, 160 }, &g_Mesh5 },
 	};
 	loop(i, OBJ_NUM)
 		Object_Init(&obj[i]);
@@ -465,6 +528,9 @@ void main()
 	VDP_EnableHBlank(TRUE);
 	VDP_SetHBlankLine(HBANK_LINE_LOW);
 	VDP_EnableDisplay(TRUE);
+
+	LVGM_Play(g_lVGM_psg_honotori_09, TRUE);
+	g_MusicPlay = TRUE;
 
 	u8 count = 0;
 	while(1)
@@ -490,9 +556,10 @@ void main()
 		o = &obj[0];
 		loop(i, OBJ_NUM)
 		{
-			o->Position.x--;
-			o->Position.y = 128 + (((i16)g_Sinus64[(i + g_FrameCount) % 64]) / 256);
-			o->Position.z = 128 + (((i16)g_Sinus64[(g_FrameCount) % 64]) / 256);
+			// o->Position.x--;
+			o->Position.y = i < 8 ? 128 - 32 - H2 : 128 + 32 - H2;
+			o->Position.y += (((i16)g_Sinus64[(i + g_FrameCount) & 0x3F]) / 256);
+			o->Position.z = 32 + (((i16)g_Sinus64[(i + g_FrameCount / 2) & 0x3F]) / 512);
 
 			Object_Draw(o, g_FrameCount & 0b0100000 ? COLOR_LIGHT_RED : COLOR_LIGHT_GREEN);
 			o++;
