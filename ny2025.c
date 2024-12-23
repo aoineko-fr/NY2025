@@ -56,7 +56,7 @@ struct Vector3D
 
 struct Mesh
 {
-	const struct Point* Points;
+	const struct Vector3D* Points;
 	u8 PointNum;
 	const struct Line* Lines;
 	u8 LineNum;
@@ -95,6 +95,9 @@ struct Object
 #define HBANK_LINE_LOW				208
 #define HBANK_LINE_HIGH				240
 
+// Function prototypes
+void UpdateSprite();
+
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
@@ -113,69 +116,75 @@ const u8 g_ChrAnim[] = { '-', '/', '|', '\\' };
 
 //.............................................................................
 //	A
-const struct Point g_PointsA[] = { { W0, H0 }, { W2, H4 }, { W4, H0 }, { W1, H2 }, { W3, H2 } };
+const struct Vector3D g_PointsA[] = { { W0, H0, 0 }, { W2, H4, 0 }, { W4, H0, 0 }, { W1, H2, 0 }, { W3, H2, 0 } };
 const struct Line g_LinesA[] = { { 0, 1 }, { 1, 2 }, { 3, 4 } };
 const struct Mesh g_MeshA = { g_PointsA, numberof(g_PointsA), g_LinesA, numberof(g_LinesA) };
 
 //.............................................................................
 //	E
-const struct Point g_PointsE[] = { { W4, H0 }, { W0, H0 }, { W0, H4 }, { W4, H4 }, { W0, H2 }, { W3, H2 } };
+const struct Vector3D g_PointsE[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W0, H4, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W3, H2, 0 } };
 const struct Line g_LinesE[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 4, 5 } };
 const struct Mesh g_MeshE = { g_PointsE, numberof(g_PointsE), g_LinesE, numberof(g_LinesE) };
 
 //.............................................................................
 //	H
-const struct Point g_PointsH[] = { { W0, H0 }, { W0, H4 }, { W4, H0 }, { W4, H4 }, { W0, H2 }, { W4, H2 } };
+const struct Vector3D g_PointsH[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W4, H2, 0 } };
 const struct Line g_LinesH[] = { { 0, 1 }, { 2, 3 }, { 4, 5 } };
 const struct Mesh g_MeshH = { g_PointsH, numberof(g_PointsH), g_LinesH, numberof(g_LinesH) };
 
 //.............................................................................
 //	N
-const struct Point g_PointsN[] = { { W0, H0 }, { W0, H4 }, { W4, H0 }, { W4, H4 } };
+const struct Vector3D g_PointsN[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 } };
 const struct Line g_LinesN[] = { { 0, 1 }, { 1, 2 }, { 2, 3 } };
 const struct Mesh g_MeshN = { g_PointsN, numberof(g_PointsN), g_LinesN, numberof(g_LinesN) };
 
 //.............................................................................
 //	P
-const struct Point g_PointsP[] = { { W0, H0 }, { W0, H4 }, { W2, H4 }, { W4, H3 }, { W2, H2 }, { W0, H2 } };
+const struct Vector3D g_PointsP[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W0, H2, 0 } };
 const struct Line g_LinesP[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 } };
 const struct Mesh g_MeshP = { g_PointsP, numberof(g_PointsP), g_LinesP, numberof(g_LinesP) };
 
 //.............................................................................
 //	R
-const struct Point g_PointsR[] = { { W0, H0 }, { W0, H4 }, { W2, H4 }, { W4, H3 }, { W2, H2 }, { W4, H0 }, { W0, H2 } };
+const struct Vector3D g_PointsR[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W4, H0, 0 }, { W0, H2, 0 } };
 const struct Line g_LinesR[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 4, 6 } };
 const struct Mesh g_MeshR = { g_PointsR, numberof(g_PointsR), g_LinesR, numberof(g_LinesR) };
 
 //.............................................................................
 //	Y
-const struct Point g_PointsY[] = { { W0, H0 }, { W4, H4 }, { W0, H4 }, { W2, H2 } };
+const struct Vector3D g_PointsY[] = { { W0, H0, 0 }, { W4, H4, 0 }, { W0, H4, 0 }, { W2, H2, 0 } };
 const struct Line g_LinesY[] = { { 0, 1 }, { 2, 3 } };
 const struct Mesh g_MeshY = { g_PointsY, numberof(g_PointsY), g_LinesY, numberof(g_LinesY) };
 
 //.............................................................................
 //	W
-const struct Point g_PointsW[] = { { W0, H4 }, { W1, H0 }, { W2, H2 }, { W3, H0 }, { W4, H4 } };
+const struct Vector3D g_PointsW[] = { { W0, H4, 0 }, { W1, H0, 0 }, { W2, H2, 0 }, { W3, H0, 0 }, { W4, H4, 0 } };
 const struct Line g_LinesW[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }  };
 const struct Mesh g_MeshW = { g_PointsW, numberof(g_PointsW), g_LinesW, numberof(g_LinesW) };
 
 //.............................................................................
 //	0
-const struct Point g_Points0[] = { { W0, H1 }, { W0, H3 }, { W1, H4 }, { W3, H4 }, { W4, H3 }, { W4, H1 }, { W3, H0 }, { W1, H0 } };
+const struct Vector3D g_Points0[] = { { W0, H1, 0 }, { W0, H3, 0 }, { W1, H4, 0 }, { W3, H4, 0 }, { W4, H3, 0 }, { W4, H1, 0 }, { W3, H0, 0 }, { W1, H0, 0 } };
 const struct Line g_Lines0[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 0 }  };
 const struct Mesh g_Mesh0 = { g_Points0, numberof(g_Points0), g_Lines0, numberof(g_Lines0) };
 
 //.............................................................................
 //	2
-const struct Point g_Points2[] = { { W4, H0 }, { W0, H0 }, { W4, H3 }, { W3, H4 }, { W1, H4 }, { W0, H3 } };
+const struct Vector3D g_Points2[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W4, H3, 0 }, { W3, H4, 0 }, { W1, H4, 0 }, { W0, H3, 0 } };
 const struct Line g_Lines2[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }  };
 const struct Mesh g_Mesh2 = { g_Points2, numberof(g_Points2), g_Lines2, numberof(g_Lines2) };
 
 //.............................................................................
 //	5
-const struct Point g_Points5[] = { { W0, H0 }, { W2, H0 }, { W4, H1 }, { W2, H2 }, { W0, H2 }, { W0, H4 }, { W4, H4 } };
+const struct Vector3D g_Points5[] = { { W0, H0, 0 }, { W2, H0, 0 }, { W4, H1, 0 }, { W2, H2, 0 }, { W0, H2, 0 }, { W0, H4, 0 }, { W4, H4, 0 } };
 const struct Line g_Lines5[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
 const struct Mesh g_Mesh5 = { g_Points5, numberof(g_Points5), g_Lines5, numberof(g_Lines5) };
+
+//.............................................................................
+//	Cube
+const struct Vector3D g_PointsCube[] = { { W2, H0, 0 }, { W2, H0, 0 }, { W4, H1, 0 }, { W2, H2, 0 }, { W0, H2, 0 }, { W0, H4, 0 }, { W4, H4, 0 }, { W4, H4, 0 } };
+const struct Line g_LinesCube[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
+const struct Mesh g_MeshCube = { g_PointsCube, numberof(g_PointsCube), g_LinesCube, numberof(g_LinesCube) };
 
 // Snow flakes
 #include "content/sprt_snow.h"
@@ -240,7 +249,6 @@ void VDP_HBlankHandler()
 // V-blank interrupt andler
 void VDP_InterruptHandler()
 {
-	VDP_SetColor(COLOR_WHITE);
 	g_VSynch = TRUE;
 	g_FrameCount++;
 
@@ -344,13 +352,13 @@ void Object_Draw(struct Object* obj, u8 color)
 	i16 objPosZ = obj->Position.z;
 
 	// Do screen projection
-	const struct Point* pt = mesh->Points;
+	const struct Vector3D* pt = mesh->Points;
 	struct Point* proj = obj->Projected;
 	for (u8 i = 0; i < mesh->PointNum; i++)
 	{
 		i16 x1 = objPosX + pt->x;
 		i16 y1 = objPosY - pt->y;
-		i16 z1 = objPosZ - 0;
+		i16 z1 = objPosZ + pt->z;
 		u8 seg = 8 + ((u8)z1 / 32);
 		SET_BANK_SEGMENT(3, seg);
 		proj->x = PEEK(0xA000 + (z1 & 0x1F) * 256 + x1);
@@ -359,7 +367,7 @@ void Object_Draw(struct Object* obj, u8 color)
 		proj++;
 	}
 
-	// Do screen projection
+	// Render mesh primitives
 	const struct Line* line = mesh->Lines;
 	struct VDP_Command36* cmd = obj->RenderBuffer[g_DrawPage];
 	for (u8 i = 0; i < mesh->LineNum; i++)
@@ -449,34 +457,18 @@ void InitializeSprite()
 void UpdateSprite()
 {
 	u8 offset = g_FrameCount >> 1;
-	loop(j, 32)
+	struct VDP_Sprite* sprt = g_SpriteData0;
+	loop(i, 32)
 	{
-		struct VDP_Sprite* sprt = &g_SpriteData0[j];
 		sprt->X += g_FallOffset[offset & 0x3F];
 		offset += 2;
 		sprt->Y++;
 		if((sprt->Y >= 212) && (sprt->Y < 240))
 			sprt->Y = 240; // 256 - 16
+		sprt++;
 	}
 	VDP_WriteVRAM((const u8*)g_SpriteData0, g_SpriteAtributeLow, g_SpriteAtributeHigh, 32 * 4);
 }
-
-//-----------------------------------------------------------------------------
-//
-// void UpdateSAT1()
-// {
-// 	SetCurrentSAT(1);
-// 	u8 anim = (g_FrameCount / 4) % 6;
-// 	// loop(j, 5)
-// 	// {
-// 	// 	u8 i = j * 2;
-// 	// 	u8 pat = PATTERN_16OR_1ST + (anim * 4);
-// 	// 	g_SpriteData1[i + 0].Pattern = pat;
-// 	// 	g_SpriteData1[i + 1].Pattern = pat + (6 * 4);
-// 	// }
-// 	VDP_WriteVRAM((const u8*)g_SpriteData1, g_SpriteAtributeLow, g_SpriteAtributeHigh, 32 * 4);
-// }
-
 
 //-----------------------------------------------------------------------------
 // Program entry point
@@ -496,25 +488,25 @@ void main()
 
 	#define OBJ_NUM 16
 	struct Object obj[OBJ_NUM] = {
-		{ 0, { 32 + 25 * 0, 32 }, &g_MeshH },
-		{ 1, { 32 + 25 * 1, 32 }, &g_MeshA },
-		{ 2, { 32 + 25 * 2, 32 }, &g_MeshP },
-		{ 3, { 32 + 25 * 3, 32 }, &g_MeshP },
-		{ 4, { 32 + 25 * 4, 32 }, &g_MeshY },
+		{ 0, { 32 + 25 * 0, 32, 0 }, &g_MeshH },
+		{ 1, { 32 + 25 * 1, 32, 0 }, &g_MeshA },
+		{ 2, { 32 + 25 * 2, 32, 0 }, &g_MeshP },
+		{ 3, { 32 + 25 * 3, 32, 0 }, &g_MeshP },
+		{ 4, { 32 + 25 * 4, 32, 0 }, &g_MeshY },
 
-		{ 5, { 32 + 25 * 6, 32 }, &g_MeshN },
-		{ 6, { 32 + 25 * 7, 32 }, &g_MeshE },
-		{ 7, { 32 + 25 * 8, 32 }, &g_MeshW },
+		{ 5, { 32 + 25 * 6, 32, 0 }, &g_MeshN },
+		{ 6, { 32 + 25 * 7, 32, 0 }, &g_MeshE },
+		{ 7, { 32 + 25 * 8, 32, 0 }, &g_MeshW },
 
-		{  8, { 32 + 25 * 0, 160 }, &g_MeshY },
-		{  9, { 32 + 25 * 1, 160 }, &g_MeshE },
-		{ 10, { 32 + 25 * 2, 160 }, &g_MeshA },
-		{ 11, { 32 + 25 * 3, 160 }, &g_MeshR },
+		{  8, { 32 + 25 * 0, 160, 0 }, &g_MeshY },
+		{  9, { 32 + 25 * 1, 160, 0 }, &g_MeshE },
+		{ 10, { 32 + 25 * 2, 160, 0 }, &g_MeshA },
+		{ 11, { 32 + 25 * 3, 160, 0 }, &g_MeshR },
 
-		{ 12, { 32 + 25 * 5, 160 }, &g_Mesh2 },
-		{ 13, { 32 + 25 * 6, 160 }, &g_Mesh0 },
-		{ 14, { 32 + 25 * 7, 160 }, &g_Mesh2 },
-		{ 15, { 32 + 25 * 8, 160 }, &g_Mesh5 },
+		{ 12, { 32 + 25 * 5, 160, 0 }, &g_Mesh2 },
+		{ 13, { 32 + 25 * 6, 160, 0 }, &g_Mesh0 },
+		{ 14, { 32 + 25 * 7, 160, 0 }, &g_Mesh2 },
+		{ 15, { 32 + 25 * 8, 160, 0 }, &g_Mesh5 },
 	};
 	loop(i, OBJ_NUM)
 		Object_Init(&obj[i]);
