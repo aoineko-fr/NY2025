@@ -18,6 +18,13 @@
 //------------------------------------
 // 16-31		(empty)
 
+// Unit			Qm.n	Sign	Min		Max		Precision
+//-----------------------------------------------------------------------------
+// Vertex		Q8.0	S		-128	127		1.0
+// Vector 3D	Q8.8	S		-128	127.99	0.004
+// Sin/cos		Q2.6	S		-2		1.98	0.015625
+// Angle		Q8.0	U		0		255		1.0
+
 //=============================================================================
 // INCLUDES
 //=============================================================================
@@ -35,18 +42,21 @@
 // Library's logo
 #define MSX_GL "\x01\x02\x03\x04\x05\x06"
 
+// 2D point on screen
 struct Point
 {
 	u8 x;
 	u8 y;
 };
 
+// Line between 2 points
 struct Line
 {
 	u8 a; // Start point index
 	u8 b; // End point index
 };
 
+// 2D vector
 struct Vector3D
 {
 	u8 x;
@@ -54,14 +64,29 @@ struct Vector3D
 	u8 z;
 };
 
+#define PRIMITIVE_LINE			0
+#define PRIMITIVE_LINE_STRIP	1
+
+// 3D mesh
+struct Primitive
+{
+	// u8 Type;
+	const u8* Points;
+	u8 PointNum;
+};
+
+// 3D mesh
 struct Mesh
 {
+	// const struct Primitive* Primitives;
+	// u8 PrimNum;
 	const struct Vector3D* Points;
 	u8 PointNum;
 	const struct Line* Lines;
 	u8 LineNum;
 };
 
+// 3D object
 struct Object
 {
 	u8 ID;
@@ -83,17 +108,13 @@ struct Object
 #define H3							24
 #define H4							32
 
-// Snow display
-// #define SPLIT_LINE			(212 / 2))
-// #define PATTERN_16OR_1ST	32
-// VRAM table addresses
-// #define ADDR_LAYOUT			0x0000
-// #define ADDR_SAT1			0x7600
-// #define ADDR_SPT			0x7800
-// #define ADDR_SAT2			0xA200
-
+// Hblank lines
 #define HBANK_LINE_LOW				208
 #define HBANK_LINE_HIGH				240
+
+// Angle parameters
+#define ANGLE_MAX					64
+#define ANGLE_MASK					0x3F
 
 // Function prototypes
 void UpdateSprite();
@@ -105,7 +126,8 @@ void UpdateSprite();
 // Fonts data
 #include "font/font_mgl_sample6.h"
 
-// 
+// Trigonometry tables
+// #include "content/mt_trigo.h"
 #include "mathtable/mt_trigo_64.inc"
 
 // 
@@ -182,8 +204,8 @@ const struct Mesh g_Mesh5 = { g_Points5, numberof(g_Points5), g_Lines5, numberof
 
 //.............................................................................
 //	Cube
-const struct Vector3D g_PointsCube[] = { { W2, H0, 0 }, { W2, H0, 0 }, { W4, H1, 0 }, { W2, H2, 0 }, { W0, H2, 0 }, { W0, H4, 0 }, { W4, H4, 0 }, { W4, H4, 0 } };
-const struct Line g_LinesCube[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
+const struct Vector3D g_PointsCube[] = { { H0, H0, H0 }, { H0, H4, H0 }, { H4, H4, H0 }, { H4, H0, H0 }, { H0, H0, H4 }, { H0, H4, H4 }, { H4, H4, H4 }, { H4, H0, H4 }};
+const struct Line g_LinesCube[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 0, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }   };
 const struct Mesh g_MeshCube = { g_PointsCube, numberof(g_PointsCube), g_LinesCube, numberof(g_LinesCube) };
 
 // Snow flakes
@@ -310,6 +332,16 @@ void CommandWait() //__PRESERVES(c, d, e, h, l, iyl, iyh)
 }
 
 //-----------------------------------------------------------------------------
+// Rotate a point around an origin
+void Vector_RotateZ(struct Vector3D* point, u8 z)
+{
+	// u8 x = point->x;
+	// u8 y = point->y;
+	// point->x = (u8)(((x * g_Cosinus256[z]) >> 6 - (y * g_Sinus256[z]) >> 6));
+	// point->y = (u8)(((x * g_Sinus256[z]) >> 6 + (y * g_Cosinus256[z]) >> 6));
+}
+
+//-----------------------------------------------------------------------------
 // Draw an object
 void Object_Init(struct Object* obj)
 {
@@ -356,6 +388,12 @@ void Object_Draw(struct Object* obj, u8 color)
 	struct Point* proj = obj->Projected;
 	for (u8 i = 0; i < mesh->PointNum; i++)
 	{
+		// struct Vector3D p0 = { pt->x, pt->y, pt->z };
+		// Vector_RotateZ(&p0, g_FrameCount & 0x3F);
+		// i16 x1 = objPosX + p0.x;
+		// i16 y1 = objPosY - p0.y;
+		// i16 z1 = objPosZ + p0.z;
+
 		i16 x1 = objPosX + pt->x;
 		i16 y1 = objPosY - pt->y;
 		i16 z1 = objPosZ + pt->z;
@@ -488,6 +526,8 @@ void main()
 
 	#define OBJ_NUM 16
 	struct Object obj[OBJ_NUM] = {
+		// { 0, { 64, 64, 0 }, &g_MeshCube },
+
 		{ 0, { 32 + 25 * 0, 32, 0 }, &g_MeshH },
 		{ 1, { 32 + 25 * 1, 32, 0 }, &g_MeshA },
 		{ 2, { 32 + 25 * 2, 32, 0 }, &g_MeshP },
@@ -538,20 +578,25 @@ void main()
 
 		// Clear 3d vector
 		struct Object* o = &obj[0];
-		loop(i, OBJ_NUM)
+		if (count)
 		{
-			Object_Clear(o);
-			o++;
+			loop(i, OBJ_NUM)
+			{
+				Object_Clear(o);
+				o++;
+			}
 		}
+		count = 1;
 
 		// Draw 3d vector
 		o = &obj[0];
 		loop(i, OBJ_NUM)
 		{
 			// o->Position.x--;
+			// o->Position.x = 32 + (((i16)g_Sinus256[g_FrameCount / 2]) / 128);
 			o->Position.y = i < 8 ? 128 - 32 - H2 : 128 + 32 - H2;
-			o->Position.y += (((i16)g_Sinus64[(i + g_FrameCount) & 0x3F]) / 256);
-			o->Position.z = 32 + (((i16)g_Sinus64[(i + g_FrameCount / 2) & 0x3F]) / 512);
+			o->Position.y += (((i16)g_Sinus64[i + g_FrameCount & 0x3F]) / 256);
+			o->Position.z = 32 + (((i16)g_Sinus64[i + g_FrameCount / 2 & 0x3F]) / 256);
 
 			Object_Draw(o, g_FrameCount & 0b0100000 ? COLOR_LIGHT_RED : COLOR_LIGHT_GREEN);
 			o++;
