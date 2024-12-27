@@ -18,12 +18,13 @@
 //------------------------------------
 // 16-31		(empty)
 
-// Unit			Qm.n	Sign	Min		Max		Precision
+// Unit				Qm.n	Sign	Min		Max		Precision
 //-----------------------------------------------------------------------------
-// Vertex		Q8.0	S		-128	127		1.0
-// Vector 3D	Q8.8	S		-128	127.99	0.004
-// Sin/cos		Q2.6	S		-2		1.98	0.015625
-// Angle		Q8.0	U		0		255		1.0
+// Mesh vertex		Q8.0	S		-128	127		1.0
+// Angle			Q8.0	U		0		255		1.0
+// Sin/cos			Q2.6	S		-2		1.98	0.015625
+// Space coord.		Q10.6	S		-512	511.98	0.015625
+// Screen coord.	Q8.0	U		0		255		1.0
 
 //=============================================================================
 // INCLUDES
@@ -42,59 +43,67 @@
 // Library's logo
 #define MSX_GL "\x01\x02\x03\x04\x05\x06"
 
-// 2D point on screen
-struct Point
+// Screen coordinates (Q8.0)
+typedef struct
 {
 	u8 x;
 	u8 y;
-};
+} Point;
 
 // Line between 2 points
-struct Line
+typedef struct
 {
 	u8 a; // Start point index
 	u8 b; // End point index
-};
+} Line;
 
-// 2D vector
-struct Vector3D
+// Mesh vertex (Q8.0)
+typedef struct
 {
-	u8 x;
-	u8 y;
-	u8 z;
-};
+	i8 x;
+	i8 y;
+	i8 z;
+} Vertex;
+
+// Space coordinates (Q10.6)
+typedef struct
+{
+	i16 x;
+	i16 y;
+	i16 z;
+} Vector;
 
 #define PRIMITIVE_LINE			0
 #define PRIMITIVE_LINE_STRIP	1
 
 // 3D mesh
-struct Primitive
+typedef struct 
 {
 	// u8 Type;
 	const u8* Points;
 	u8 PointNum;
-};
+} Primitive;
 
 // 3D mesh
-struct Mesh
+typedef struct
 {
 	// const struct Primitive* Primitives;
 	// u8 PrimNum;
-	const struct Vector3D* Points;
+	const Vertex* Points;
 	u8 PointNum;
-	const struct Line* Lines;
+	const Line* Lines;
 	u8 LineNum;
-};
+} Mesh;
 
 // 3D object
-struct Object
+typedef struct
 {
 	u8 ID;
-	struct Vector3D Position;
-	const struct Mesh* Shape;
+	Vector Position;
+	const Mesh* Shape;
 	struct VDP_Command36* RenderBuffer[2];
-	struct Point* Projected; 
-};
+	Point* Projected; 
+} Object;
 
 // 3D letter points
 #define W0							0
@@ -127,8 +136,7 @@ void UpdateSprite();
 #include "font/font_mgl_sample6.h"
 
 // Trigonometry tables
-// #include "content/mt_trigo.h"
-#include "mathtable/mt_trigo_64.inc"
+#include "content/mt_trigo.h"
 
 // 
 #include "content/lvgm_psg_honotori_09.h"
@@ -138,75 +146,75 @@ const u8 g_ChrAnim[] = { '-', '/', '|', '\\' };
 
 //.............................................................................
 //	A
-const struct Vector3D g_PointsA[] = { { W0, H0, 0 }, { W2, H4, 0 }, { W4, H0, 0 }, { W1, H2, 0 }, { W3, H2, 0 } };
-const struct Line g_LinesA[] = { { 0, 1 }, { 1, 2 }, { 3, 4 } };
-const struct Mesh g_MeshA = { g_PointsA, numberof(g_PointsA), g_LinesA, numberof(g_LinesA) };
+const Vertex g_PointsA[] = { { W0, H0, 0 }, { W2, H4, 0 }, { W4, H0, 0 }, { W1, H2, 0 }, { W3, H2, 0 } };
+const Line g_LinesA[] = { { 0, 1 }, { 1, 2 }, { 3, 4 } };
+const Mesh g_MeshA = { g_PointsA, numberof(g_PointsA), g_LinesA, numberof(g_LinesA) };
 
 //.............................................................................
 //	E
-const struct Vector3D g_PointsE[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W0, H4, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W3, H2, 0 } };
-const struct Line g_LinesE[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 4, 5 } };
-const struct Mesh g_MeshE = { g_PointsE, numberof(g_PointsE), g_LinesE, numberof(g_LinesE) };
+const Vertex g_PointsE[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W0, H4, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W3, H2, 0 } };
+const Line g_LinesE[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 4, 5 } };
+const Mesh g_MeshE = { g_PointsE, numberof(g_PointsE), g_LinesE, numberof(g_LinesE) };
 
 //.............................................................................
 //	H
-const struct Vector3D g_PointsH[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W4, H2, 0 } };
-const struct Line g_LinesH[] = { { 0, 1 }, { 2, 3 }, { 4, 5 } };
-const struct Mesh g_MeshH = { g_PointsH, numberof(g_PointsH), g_LinesH, numberof(g_LinesH) };
+const Vertex g_PointsH[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W4, H2, 0 } };
+const Line g_LinesH[] = { { 0, 1 }, { 2, 3 }, { 4, 5 } };
+const Mesh g_MeshH = { g_PointsH, numberof(g_PointsH), g_LinesH, numberof(g_LinesH) };
 
 //.............................................................................
 //	N
-const struct Vector3D g_PointsN[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 } };
-const struct Line g_LinesN[] = { { 0, 1 }, { 1, 2 }, { 2, 3 } };
-const struct Mesh g_MeshN = { g_PointsN, numberof(g_PointsN), g_LinesN, numberof(g_LinesN) };
+const Vertex g_PointsN[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 } };
+const Line g_LinesN[] = { { 0, 1 }, { 1, 2 }, { 2, 3 } };
+const Mesh g_MeshN = { g_PointsN, numberof(g_PointsN), g_LinesN, numberof(g_LinesN) };
 
 //.............................................................................
 //	P
-const struct Vector3D g_PointsP[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W0, H2, 0 } };
-const struct Line g_LinesP[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 } };
-const struct Mesh g_MeshP = { g_PointsP, numberof(g_PointsP), g_LinesP, numberof(g_LinesP) };
+const Vertex g_PointsP[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W0, H2, 0 } };
+const Line g_LinesP[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 } };
+const Mesh g_MeshP = { g_PointsP, numberof(g_PointsP), g_LinesP, numberof(g_LinesP) };
 
 //.............................................................................
 //	R
-const struct Vector3D g_PointsR[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W4, H0, 0 }, { W0, H2, 0 } };
-const struct Line g_LinesR[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 4, 6 } };
-const struct Mesh g_MeshR = { g_PointsR, numberof(g_PointsR), g_LinesR, numberof(g_LinesR) };
+const Vertex g_PointsR[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W4, H0, 0 }, { W0, H2, 0 } };
+const Line g_LinesR[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 4, 6 } };
+const Mesh g_MeshR = { g_PointsR, numberof(g_PointsR), g_LinesR, numberof(g_LinesR) };
 
 //.............................................................................
 //	Y
-const struct Vector3D g_PointsY[] = { { W0, H0, 0 }, { W4, H4, 0 }, { W0, H4, 0 }, { W2, H2, 0 } };
-const struct Line g_LinesY[] = { { 0, 1 }, { 2, 3 } };
-const struct Mesh g_MeshY = { g_PointsY, numberof(g_PointsY), g_LinesY, numberof(g_LinesY) };
+const Vertex g_PointsY[] = { { W0, H0, 0 }, { W4, H4, 0 }, { W0, H4, 0 }, { W2, H2, 0 } };
+const Line g_LinesY[] = { { 0, 1 }, { 2, 3 } };
+const Mesh g_MeshY = { g_PointsY, numberof(g_PointsY), g_LinesY, numberof(g_LinesY) };
 
 //.............................................................................
 //	W
-const struct Vector3D g_PointsW[] = { { W0, H4, 0 }, { W1, H0, 0 }, { W2, H2, 0 }, { W3, H0, 0 }, { W4, H4, 0 } };
-const struct Line g_LinesW[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }  };
-const struct Mesh g_MeshW = { g_PointsW, numberof(g_PointsW), g_LinesW, numberof(g_LinesW) };
+const Vertex g_PointsW[] = { { W0, H4, 0 }, { W1, H0, 0 }, { W2, H2, 0 }, { W3, H0, 0 }, { W4, H4, 0 } };
+const Line g_LinesW[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }  };
+const Mesh g_MeshW = { g_PointsW, numberof(g_PointsW), g_LinesW, numberof(g_LinesW) };
 
 //.............................................................................
 //	0
-const struct Vector3D g_Points0[] = { { W0, H1, 0 }, { W0, H3, 0 }, { W1, H4, 0 }, { W3, H4, 0 }, { W4, H3, 0 }, { W4, H1, 0 }, { W3, H0, 0 }, { W1, H0, 0 } };
-const struct Line g_Lines0[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 0 }  };
-const struct Mesh g_Mesh0 = { g_Points0, numberof(g_Points0), g_Lines0, numberof(g_Lines0) };
+const Vertex g_Points0[] = { { W0, H1, 0 }, { W0, H3, 0 }, { W1, H4, 0 }, { W3, H4, 0 }, { W4, H3, 0 }, { W4, H1, 0 }, { W3, H0, 0 }, { W1, H0, 0 } };
+const Line g_Lines0[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 0 }  };
+const Mesh g_Mesh0 = { g_Points0, numberof(g_Points0), g_Lines0, numberof(g_Lines0) };
 
 //.............................................................................
 //	2
-const struct Vector3D g_Points2[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W4, H3, 0 }, { W3, H4, 0 }, { W1, H4, 0 }, { W0, H3, 0 } };
-const struct Line g_Lines2[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }  };
-const struct Mesh g_Mesh2 = { g_Points2, numberof(g_Points2), g_Lines2, numberof(g_Lines2) };
+const Vertex g_Points2[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W4, H3, 0 }, { W3, H4, 0 }, { W1, H4, 0 }, { W0, H3, 0 } };
+const Line g_Lines2[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }  };
+const Mesh g_Mesh2 = { g_Points2, numberof(g_Points2), g_Lines2, numberof(g_Lines2) };
 
 //.............................................................................
 //	5
-const struct Vector3D g_Points5[] = { { W0, H0, 0 }, { W2, H0, 0 }, { W4, H1, 0 }, { W2, H2, 0 }, { W0, H2, 0 }, { W0, H4, 0 }, { W4, H4, 0 } };
-const struct Line g_Lines5[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
-const struct Mesh g_Mesh5 = { g_Points5, numberof(g_Points5), g_Lines5, numberof(g_Lines5) };
+const Vertex g_Points5[] = { { W0, H0, 0 }, { W2, H0, 0 }, { W4, H1, 0 }, { W2, H2, 0 }, { W0, H2, 0 }, { W0, H4, 0 }, { W4, H4, 0 } };
+const Line g_Lines5[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
+const Mesh g_Mesh5 = { g_Points5, numberof(g_Points5), g_Lines5, numberof(g_Lines5) };
 
 //.............................................................................
 //	Cube
-const struct Vector3D g_PointsCube[] = { { H0, H0, H0 }, { H0, H4, H0 }, { H4, H4, H0 }, { H4, H0, H0 }, { H0, H0, H4 }, { H0, H4, H4 }, { H4, H4, H4 }, { H4, H0, H4 }};
-const struct Line g_LinesCube[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 0, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }   };
-const struct Mesh g_MeshCube = { g_PointsCube, numberof(g_PointsCube), g_LinesCube, numberof(g_LinesCube) };
+const Vertex g_PointsCube[] = { { -16, -16, -16 }, { -16, 16, -16 }, { 16, 16, -16 }, { 16, -16, -16 }, { -16, -16, 16 }, { -16, 16, 16 }, { 16, 16, 16 }, { 16, -16, 16 }};
+const Line g_LinesCube[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 0, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }   };
+const Mesh g_MeshCube = { g_PointsCube, numberof(g_PointsCube), g_LinesCube, numberof(g_LinesCube) };
 
 // Snow flakes
 #include "content/sprt_snow.h"
@@ -333,33 +341,33 @@ void CommandWait() //__PRESERVES(c, d, e, h, l, iyl, iyh)
 
 //-----------------------------------------------------------------------------
 // Rotate a point around an origin
-void Vector_RotateZ(struct Vector3D* point, u8 z)
+void Vector_RotateZ(Vertex* point, u8 z)
 {
-	// u8 x = point->x;
-	// u8 y = point->y;
-	// point->x = (u8)(((x * g_Cosinus256[z]) >> 6 - (y * g_Sinus256[z]) >> 6));
-	// point->y = (u8)(((x * g_Sinus256[z]) >> 6 + (y * g_Cosinus256[z]) >> 6));
+	i16 x = (i16)point->x;
+	i16 y = (i16)point->y;
+	point->x = (i8)((x * (i16)g_Cosinus64[z] - y * (i16)g_Sinus64[z]) / 64);
+	point->y = (i8)((x * (i16)g_Sinus64[z] + y * (i16)g_Cosinus64[z]) / 64);
 }
 
 //-----------------------------------------------------------------------------
 // Draw an object
-void Object_Init(struct Object* obj)
+void Object_Init(Object* obj)
 {
-	const struct Mesh* mesh = obj->Shape;
-	// const struct Point* pt = mesh->Points;
-	// const struct Line* line = mesh->Lines;
+	const Mesh* mesh = obj->Shape;
+	// const Point* pt = mesh->Points;
+	// const Line* line = mesh->Lines;
 
 	loop(i, 2)
 		obj->RenderBuffer[i] = (struct VDP_Command36*)Mem_HeapAlloc(mesh->LineNum * sizeof(struct VDP_Command36));
 
-	obj->Projected = (struct Point*)Mem_HeapAlloc(mesh->PointNum * sizeof(struct Point));
+	obj->Projected = (Point*)Mem_HeapAlloc(mesh->PointNum * sizeof(Point));
 }
 
 //-----------------------------------------------------------------------------
 // Draw an object
-u8 Object_Clear(struct Object* obj)
+u8 Object_Clear(Object* obj)
 {
-	const struct Mesh* mesh = obj->Shape;
+	const Mesh* mesh = obj->Shape;
 	struct VDP_Command36* cmd = obj->RenderBuffer[g_DrawPage];
 	for (u8 i = 0; i < mesh->LineNum; i++)
 	{
@@ -373,30 +381,26 @@ u8 Object_Clear(struct Object* obj)
 
 //-----------------------------------------------------------------------------
 // Draw an object
-void Object_Draw(struct Object* obj, u8 color)
+void Object_Draw(Object* obj, u8 color)
 {
 	g_VDP_Command.CLR = color;
 	g_VDP_Command.CMD = VDP_CMD_LINE;
 
-	const struct Mesh* mesh = obj->Shape;
+	const Mesh* mesh = obj->Shape;
 	i16 objPosX = obj->Position.x;
 	i16 objPosY = obj->Position.y;
 	i16 objPosZ = obj->Position.z;
 
 	// Do screen projection
-	const struct Vector3D* pt = mesh->Points;
-	struct Point* proj = obj->Projected;
+	const Vertex* pt = mesh->Points;
+	Point* proj = obj->Projected;
 	for (u8 i = 0; i < mesh->PointNum; i++)
 	{
-		// struct Vector3D p0 = { pt->x, pt->y, pt->z };
-		// Vector_RotateZ(&p0, g_FrameCount & 0x3F);
-		// i16 x1 = objPosX + p0.x;
-		// i16 y1 = objPosY - p0.y;
-		// i16 z1 = objPosZ + p0.z;
-
-		i16 x1 = objPosX + pt->x;
-		i16 y1 = objPosY - pt->y;
-		i16 z1 = objPosZ + pt->z;
+		Vertex p0 = { pt->x, pt->y, pt->z };
+		Vector_RotateZ(&p0, g_FrameCount & 0x3F);
+		i16 x1 = objPosX + p0.x + 128;
+		i16 y1 = objPosY + p0.y + (212/2);
+		i16 z1 = objPosZ + p0.z;
 		u8 seg = 8 + ((u8)z1 / 32);
 		SET_BANK_SEGMENT(3, seg);
 		proj->x = PEEK(0xA000 + (z1 & 0x1F) * 256 + x1);
@@ -406,14 +410,14 @@ void Object_Draw(struct Object* obj, u8 color)
 	}
 
 	// Render mesh primitives
-	const struct Line* line = mesh->Lines;
+	const Line* line = mesh->Lines;
 	struct VDP_Command36* cmd = obj->RenderBuffer[g_DrawPage];
 	for (u8 i = 0; i < mesh->LineNum; i++)
 	{
-		const struct Point* pt1 = &obj->Projected[line->a];
+		const Point* pt1 = &obj->Projected[line->a];
 		i16 x1 = pt1->x;
 		i16 y1 = pt1->y;
-		const struct Point* pt2 = &obj->Projected[line->b];
+		const Point* pt2 = &obj->Projected[line->b];
 		i16 x2 = pt2->x;
 		i16 y2 = pt2->y;
 
@@ -512,6 +516,7 @@ void UpdateSprite()
 // Program entry point
 void main()
 {
+	// Initialize screen
 	VDP_SetMode(VDP_MODE_SCREEN5);
 	VDP_SetColor(COLOR_BLACK);
 	VDP_EnableDisplay(FALSE);
@@ -519,34 +524,35 @@ void main()
 	VDP_SetFrequency(VDP_FREQ_60HZ);
 	VDP_ClearVRAM();
 
+	// Initialize font
 	Print_SetBitmapFont(g_Font_MGL_Sample6);
 	Print_SetColor(COLOR_GRAY, COLOR_TRANSPARENT);
 	Print_DrawTextAt(0, 0, MSX_GL);
 	Print_DrawTextAt(0, 256, MSX_GL);
 
-	#define OBJ_NUM 16
-	struct Object obj[OBJ_NUM] = {
-		// { 0, { 64, 64, 0 }, &g_MeshCube },
+	#define OBJ_NUM 1
+	Object obj[OBJ_NUM] = {
+		{ 0, { 128, 64, 0 }, &g_MeshCube },
 
-		{ 0, { 32 + 25 * 0, 32, 0 }, &g_MeshH },
-		{ 1, { 32 + 25 * 1, 32, 0 }, &g_MeshA },
-		{ 2, { 32 + 25 * 2, 32, 0 }, &g_MeshP },
-		{ 3, { 32 + 25 * 3, 32, 0 }, &g_MeshP },
-		{ 4, { 32 + 25 * 4, 32, 0 }, &g_MeshY },
+		// { 0, { 32 - W2 + 25 * 0, 32, 0 }, &g_MeshH },
+		// { 1, { 32 - W2 + 25 * 1, 32, 0 }, &g_MeshA },
+		// { 2, { 32 - W2 + 25 * 2, 32, 0 }, &g_MeshP },
+		// { 3, { 32 - W2 + 25 * 3, 32, 0 }, &g_MeshP },
+		// { 4, { 32 - W2 + 25 * 4, 32, 0 }, &g_MeshY },
 
-		{ 5, { 32 + 25 * 6, 32, 0 }, &g_MeshN },
-		{ 6, { 32 + 25 * 7, 32, 0 }, &g_MeshE },
-		{ 7, { 32 + 25 * 8, 32, 0 }, &g_MeshW },
+		// { 5, { 32 - W2 + 25 * 6, 32, 0 }, &g_MeshN },
+		// { 6, { 32 - W2 + 25 * 7, 32, 0 }, &g_MeshE },
+		// { 7, { 32 - W2 + 25 * 8, 32, 0 }, &g_MeshW },
 
-		{  8, { 32 + 25 * 0, 160, 0 }, &g_MeshY },
-		{  9, { 32 + 25 * 1, 160, 0 }, &g_MeshE },
-		{ 10, { 32 + 25 * 2, 160, 0 }, &g_MeshA },
-		{ 11, { 32 + 25 * 3, 160, 0 }, &g_MeshR },
+		// {  8, { 32 - W2 + 25 * 0, 160, 0 }, &g_MeshY },
+		// {  9, { 32 - W2 + 25 * 1, 160, 0 }, &g_MeshE },
+		// { 10, { 32 - W2 + 25 * 2, 160, 0 }, &g_MeshA },
+		// { 11, { 32 - W2 + 25 * 3, 160, 0 }, &g_MeshR },
 
-		{ 12, { 32 + 25 * 5, 160, 0 }, &g_Mesh2 },
-		{ 13, { 32 + 25 * 6, 160, 0 }, &g_Mesh0 },
-		{ 14, { 32 + 25 * 7, 160, 0 }, &g_Mesh2 },
-		{ 15, { 32 + 25 * 8, 160, 0 }, &g_Mesh5 },
+		// { 12, { 32 - W2 + 25 * 5, 160, 0 }, &g_Mesh2 },
+		// { 13, { 32 - W2 + 25 * 6, 160, 0 }, &g_Mesh0 },
+		// { 14, { 32 - W2 + 25 * 7, 160, 0 }, &g_Mesh2 },
+		// { 15, { 32 - W2 + 25 * 8, 160, 0 }, &g_Mesh5 },
 	};
 	loop(i, OBJ_NUM)
 		Object_Init(&obj[i]);
@@ -577,7 +583,7 @@ void main()
 		UpdateSprite();
 
 		// Clear 3d vector
-		struct Object* o = &obj[0];
+		Object* o = &obj[0];
 		if (count)
 		{
 			loop(i, OBJ_NUM)
@@ -594,7 +600,9 @@ void main()
 		{
 			// o->Position.x--;
 			// o->Position.x = 32 + (((i16)g_Sinus256[g_FrameCount / 2]) / 128);
-			o->Position.y = i < 8 ? 128 - 32 - H2 : 128 + 32 - H2;
+			// o->Position.y = i < 8 ? 128 - 32 - H2 : 128 + 32 - H2;
+			o->Position.x = 0;
+			o->Position.y = 0;
 			o->Position.y += (((i16)g_Sinus64[i + g_FrameCount & 0x3F]) / 256);
 			o->Position.z = 32 + (((i16)g_Sinus64[i + g_FrameCount / 2 & 0x3F]) / 256);
 

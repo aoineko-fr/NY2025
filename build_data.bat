@@ -17,4 +17,5 @@ echo -- Export sprite data...
 echo -- Generate mathematics tables...
 %MSXtk%\MSXmath -num 256 -bytes 1 -shift 0  proj 1.0 0.1 -o %Dest%/mt_proj256.bin
 %MSXtk%\MSXmath -num 256 -bytes 1 -shift 0  proj 1.0 0.1 -o %Dest%/mt_proj256.h
-%MSXtk%\MSXmath -num 256 -bytes 2 -shift 12  sin cos -o %Dest%/mt_trigo.h
+
+%MSXtk%\MSXmath -num 64 -bytes 1 -shift 6 sin cos -o %Dest%/mt_trigo.h
