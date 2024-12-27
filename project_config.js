@@ -113,7 +113,8 @@ CustomISR = "VHBLANK";
 
 //-- List of raw data files to be added to final binary (array). Each entry must be in the following format: { offset:0x0000, file:"myfile.bin" }
 RawFiles = [
-    { segment: 8, file:"content/mt_proj256.bin"},
+    { segment: 8,  file:"content/mt_proj256.bin"},
+    { segment: 16, file:"content/mt_muls.bin"},
 ];
 
 //-- List of data files to copy to disk (array)

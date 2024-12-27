@@ -16,14 +16,15 @@
 //------------------------------------
 // 8-15			Proj 3D
 //------------------------------------
-// 16-31		(empty)
+// 16-31		Muls
 
-// Unit			Qm.n	Sign	Min		Max		Precision
+// Unit				Qm.n	Sign	Min		Max		Precision
 //-----------------------------------------------------------------------------
-// Vertex		Q8.0	S		-128	127		1.0
-// Vector 3D	Q8.8	S		-128	127.99	0.004
-// Sin/cos		Q2.6	S		-2		1.98	0.015625
-// Angle		Q8.0	U		0		255		1.0
+// Screen Pos		Q8.0	U		0		255		1.0
+// Mesh Vertex		Q8.0	S		-128	127		1.0
+// Angle			Q8.0	U		0		255		1.0
+// Sin/cos			Q2.6	S		-2		1.98	0.015625
+// Vector 3D		Q10.6	S		-512	511.98	0.015625
 
 //=============================================================================
 // INCLUDES
@@ -34,6 +35,7 @@
 #include "memory.h"
 #include "psg.h"
 #include "vgm/lvgm_player.h"
+#include "ny2025_rawdef.h"
 
 //=============================================================================
 // DEFINES
@@ -43,7 +45,7 @@
 #define MSX_GL "\x01\x02\x03\x04\x05\x06"
 
 // 2D point on screen
-struct Point
+struct Vector2D
 {
 	u8 x;
 	u8 y;
@@ -250,6 +252,15 @@ bool g_MusicPlay = FALSE;
 #define VDP_REG(_r)			(F_VDP_REG | _r)
 
 //-----------------------------------------------------------------------------
+// Multiply two signed 8-bit integers using a lookup table
+inline i16 MultiplyS8(i8 a, i8 b)
+{
+	u8 seg = MT_MULS_BIN_SEG + ((u8)a >> 4);
+	SET_BANK_SEGMENT(3, seg);
+	return (i16)Peek16(0xA000 + ((u8)a & 0x0F) * 512 + (u8)b * 2);
+}
+
+//-----------------------------------------------------------------------------
 // H-Blank handler
 void VDP_HBlankHandler()
 {
@@ -397,7 +408,7 @@ void Object_Draw(struct Object* obj, u8 color)
 		i16 x1 = objPosX + pt->x;
 		i16 y1 = objPosY - pt->y;
 		i16 z1 = objPosZ + pt->z;
-		u8 seg = 8 + ((u8)z1 / 32);
+		u8 seg = MT_PROJ256_BIN_SEG + ((u8)z1 / 32);
 		SET_BANK_SEGMENT(3, seg);
 		proj->x = PEEK(0xA000 + (z1 & 0x1F) * 256 + x1);
 		proj->y = PEEK(0xA000 + (z1 & 0x1F) * 256 + y1);
