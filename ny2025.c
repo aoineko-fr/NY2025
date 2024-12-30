@@ -171,6 +171,11 @@ enum STATE_ID
 	STATE_2025_ZOOM,
 	STATE_2025_WAIT1,
 	STATE_2025_WAIT2,
+	STATE_NEWYEAR_INIT,
+	STATE_NEWYEAR_ZOOM,
+	STATE_NEWYEAR_WAIT1,
+	STATE_NEWYEAR_WAIT2,
+	STATE_FINAL,
 };
 
 //=============================================================================
@@ -682,14 +687,14 @@ DEBUG_INIT();
 		{ 9,  {  13, -92, 224 }, { 0, 0, 0 }, &g_Mesh2, Vector_RotateY },
 		{ 10, {  38, -92, 224 }, { 0, 0, 0 }, &g_Mesh5, Vector_RotateY },
 
-		// { 5, { 32 - W2 + 25 * 6, 32, 0 }, { 0, 0, 0 }, &g_MeshN },
-		// { 6, { 32 - W2 + 25 * 7, 32, 0 }, { 0, 0, 0 }, &g_MeshE },
-		// { 7, { 32 - W2 + 25 * 8, 32, 0 }, { 0, 0, 0 }, &g_MeshW },
+		{ 11, { -87, 0, 224 }, { 0, 0, 0 }, &g_MeshN, Vector_RotateX },
+		{ 12, { -62, 0, 224 }, { 0, 0, 0 }, &g_MeshE, Vector_RotateX },
+		{ 13, { -32, 0, 224 }, { 0, 0, 0 }, &g_MeshW, Vector_RotateX },
 
-		// {  8, { 32 - W2 + 25 * 0, 160, 0 }, { 0, 0, 0 }, &g_MeshY },
-		// {  9, { 32 - W2 + 25 * 1, 160, 0 }, { 0, 0, 0 }, &g_MeshE },
-		// { 10, { 32 - W2 + 25 * 2, 160, 0 }, { 0, 0, 0 }, &g_MeshA },
-		// { 11, { 32 - W2 + 25 * 3, 160, 0 }, { 0, 0, 0 }, &g_MeshR },
+		{ 14, {  13, 0, 224 }, { 0, 0, 0 }, &g_MeshY, Vector_RotateX },
+		{ 15, {  38, 0, 224 }, { 0, 0, 0 }, &g_MeshE, Vector_RotateX },
+		{ 16, {  63, 0, 224 }, { 0, 0, 0 }, &g_MeshA, Vector_RotateX },
+		{ 17, {  88, 0, 224 }, { 0, 0, 0 }, &g_MeshR, Vector_RotateX },
 
 	};
 	loop(i, numberof(obj))
@@ -712,6 +717,7 @@ DEBUG_INIT();
 	u8 objIdx = 0;
 	u8 objNum = 0;
 	u8 count = 0;
+	u8 prevFrame = 0;
 	bool bClear = TRUE;
 	while(1)
 	{
@@ -739,7 +745,7 @@ LoopStart:
 		else if (IS_KEY_PRESSED(row8, KEY_HOME))
 			pos.z -= 2;
 
-DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
+// DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 
 		// Clear 3d vector
 		Object* o;
@@ -758,6 +764,8 @@ DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 		u8 color = bBlink ? NY_COLOR_RED1 : NY_COLOR_GREEN1;
 		VDP_SetPaletteEntry(NY_COLOR_BLINK, bBlink ? RGB16_From32B(0xFF8080) : RGB16_From32B(0x80FF80));
 
+DEBUG_PRINT("Frame: %i\n", frame);
+
 		switch(g_DemoState)
 		{
 
@@ -773,7 +781,7 @@ DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 			if (count < 32)
 			{
 				g_DemoState = STATE_CUBE_WAIT;
-				count = 240;
+				count = 120;
 			}	
 			break;
 		case STATE_CUBE_WAIT:
@@ -797,7 +805,7 @@ DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 				g_DemoState = STATE_HAPPY_WAIT1;
 			break;
 		case STATE_HAPPY_WAIT1:
-			if (frame == 0)
+			if (frame < prevFrame)
 			{
 				g_DemoState = STATE_HAPPY_WAIT2;
 				count = 4;
@@ -829,9 +837,7 @@ DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 			}
 			break;
 		case STATE_2025_WAIT1:
-			if (count > 0)
-				count--;
-			else
+			if (frame < prevFrame)
 			{
 				g_DemoState = STATE_2025_WAIT2;
 				count = 4;
@@ -843,9 +849,46 @@ DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 			color = NY_COLOR_BLINK;
 			count--;
 			if (count == 0)
+				g_DemoState = STATE_NEWYEAR_INIT;
+			break;
+
+		//-------- NEWYEAR -------- 
+		case STATE_NEWYEAR_INIT:
+			objIdx = 11;
+			objNum = 7;
+			count = 224;
+			g_DemoState = STATE_NEWYEAR_ZOOM;
+			break;
+		case STATE_NEWYEAR_ZOOM:
+			bClear = TRUE;
+			count -= 2;
+			if (count < 64)
 			{
-				goto LoopStart;
+				g_DemoState = STATE_NEWYEAR_WAIT1;
+				count = 209;
+			}
+			break;
+		case STATE_NEWYEAR_WAIT1:
+			if (frame < prevFrame)
+			{
+				g_DemoState = STATE_NEWYEAR_WAIT2;
+				count = 4;
+				bClear = FALSE;
+			}
+			break;
+		case STATE_NEWYEAR_WAIT2:
+			frame = 0;
+			color = NY_COLOR_BLINK;
+			count--;
+			if (count == 0)
+			{
+				objNum = 0;
+				g_DemoState = STATE_FINAL;
 			}	
+			break;
+
+		//-------- FINAL --------
+		case STATE_FINAL:
 			break;
 		}
 
@@ -883,12 +926,22 @@ DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 			case STATE_2025_WAIT2:
 				o->Rotation.y = 0;
 				break;
+
+			//-------- NEWYEAR --------
+			case STATE_NEWYEAR_ZOOM:
+				o->Position.z = count;
+			case STATE_NEWYEAR_WAIT1:
+				o->Rotation.x = frame;
+				break;
+			case STATE_NEWYEAR_WAIT2:
+				o->Rotation.x = 0;
+				break;
 			}
-
-
 
 			Object_Draw(o, color);
 			o++;
 		}
+
+		prevFrame = frame;
 	}
 }
