@@ -42,7 +42,7 @@ ProjModules = [ ProjName ];
 // ProjSegments = "";
 
 //-- List of library modules to build (array)
-LibModules = [ "psg", "vgm/lvgm_player", "math", "draw", "system", "bios", "vdp", "print", "input", "memory" ];
+LibModules = [ "debug", "psg", "vgm/lvgm_player", "math", "draw", "system", "bios", "vdp", "print", "input", "memory" ];
 
 //-- Additional sources to be compiled and linked with the project (array)
 // AddSources = [];
@@ -140,7 +140,7 @@ AppSignature = true;
 AppCompany = "GL";
 
 //-- Application ID. Can be 2 character string or 16-bits integer (0~65535)
-AppID = "EX";
+AppID = "25";
 
 //-- Application extra data (array). Comma-separated bytes starting with data size
 // AppExtra = [];
@@ -156,7 +156,7 @@ BuildLibrary = false;
 // Debug = false;
 
 //-- Move debug symbols to deployement folder (boolean)
-// DebugSymbols = false;
+DebugSymbols = true;
 
 //-- Allow compiler to generate undocumented Z80 instructions (boolean)
 // AllowUndocumented = false;
