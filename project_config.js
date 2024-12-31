@@ -179,7 +179,7 @@ DebugSymbols = true;
 //   - Optimized	   50000
 //   - Ultra		  200000
 //   - Insane		10000000
-CompileComplexity = "Default";
+CompileComplexity = "Ultra";
 
 //-- Additionnal compilation options (string)
 // CompileOpt = "";
