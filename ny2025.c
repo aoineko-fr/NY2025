@@ -37,16 +37,92 @@
 #include "vgm/lvgm_player.h"
 #include "ny2025_rawdef.h"
 #include "debug.h"
-#include "3d.h"
 
 //=============================================================================
 // DEFINES
 //=============================================================================
 
 // Library's logo
-#define MSX_GL "\x01\x02\x03\x04\x05\x06"
+// #define MSX_GL "\x01\x02\x03\x04\x05\x06"
 
-#define SPRITE_SNOW_NUM				30
+// Screen coordinates (Q8.0)
+typedef struct
+{
+	u8 x;
+	u8 y;
+	u8 z;
+} Point;
+
+// Line between 2 points
+typedef struct
+{
+	u8 a; // Start point index
+	u8 b; // End point index
+} Line;
+
+// Mesh vertex (Q8.0)
+typedef struct
+{
+	i8 x;
+	i8 y;
+	i8 z;
+} Vertex;
+
+// Space coordinates (Q10.6)
+typedef struct
+{
+	i16 x;
+	i16 y;
+	i16 z;
+} Vector;
+
+#define PRIMITIVE_LINE			0
+#define PRIMITIVE_LINE_STRIP	1
+
+// 3D mesh
+typedef struct 
+{
+	// u8 Type;
+	const u8* Points;
+	u8 PointNum;
+} Primitive;
+
+// 3D mesh
+typedef struct
+{
+	// const struct Primitive* Primitives;
+	// u8 PrimNum;
+	const Vertex* Points;
+	u8 PointNum;
+	const Line* Lines;
+	u8 LineNum;
+} Mesh;
+
+typedef void (*TransformCB)(Vertex* point, Vector* rot);
+
+// 3D object
+typedef struct
+{
+	u8 ID;
+	Vector Position;
+	Vector Rotation;
+	const Mesh* Shape;
+	TransformCB Transform;
+	struct VDP_Command36* RenderBuffer[2];
+	Point* Projected; 
+} Object;
+
+// 3D letter points
+#define W0							-10
+#define W1							-5
+#define W2							0
+#define W3							5
+#define W4							10
+#define H0							-16
+#define H1							-8
+#define H2							0
+#define H3							8
+#define H4							16
 
 // Hblank lines
 #define HBANK_LINE_LOW				208
@@ -91,26 +167,20 @@ enum STATE_ID
 	STATE_HAPPY_ZOOM,
 	STATE_HAPPY_WAIT1,
 	STATE_HAPPY_WAIT2,
-	STATE_HAPPY_WAIT3,
 	STATE_2025_INIT,
 	STATE_2025_ZOOM,
 	STATE_2025_WAIT1,
 	STATE_2025_WAIT2,
-	STATE_2025_WAIT3,
 	STATE_NEWYEAR_INIT,
 	STATE_NEWYEAR_ZOOM,
 	STATE_NEWYEAR_WAIT1,
 	STATE_NEWYEAR_WAIT2,
-	STATE_NEWYEAR_WAIT3,
-	STATE_END,
+	STATE_FINAL,
 };
 
 //=============================================================================
 // READ-ONLY DATA
 //=============================================================================
-
-// Fonts data
-#include "3d.c"
 
 // Fonts data
 #include "font/font_mgl_sample6.h"
@@ -123,6 +193,84 @@ enum STATE_ID
 
 // Animation characters
 const u8 g_ChrAnim[] = { '-', '/', '|', '\\' };
+
+//.............................................................................
+//	A
+const Vertex g_PointsA[] = { { W0, H0, 0 }, { W2, H4, 0 }, { W4, H0, 0 }, { W1, H2, 0 }, { W3, H2, 0 } };
+const Line g_LinesA[] = { { 0, 1 }, { 1, 2 }, { 3, 4 } };
+const Mesh g_MeshA = { g_PointsA, numberof(g_PointsA), g_LinesA, numberof(g_LinesA) };
+
+//.............................................................................
+//	E
+const Vertex g_PointsE[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W0, H4, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W3, H2, 0 } };
+const Line g_LinesE[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 4, 5 } };
+const Mesh g_MeshE = { g_PointsE, numberof(g_PointsE), g_LinesE, numberof(g_LinesE) };
+
+//.............................................................................
+//	H
+const Vertex g_PointsH[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 }, { W0, H2, 0 }, { W4, H2, 0 } };
+const Line g_LinesH[] = { { 0, 1 }, { 2, 3 }, { 4, 5 } };
+const Mesh g_MeshH = { g_PointsH, numberof(g_PointsH), g_LinesH, numberof(g_LinesH) };
+
+//.............................................................................
+//	N
+const Vertex g_PointsN[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W4, H0, 0 }, { W4, H4, 0 } };
+const Line g_LinesN[] = { { 0, 1 }, { 1, 2 }, { 2, 3 } };
+const Mesh g_MeshN = { g_PointsN, numberof(g_PointsN), g_LinesN, numberof(g_LinesN) };
+
+//.............................................................................
+//	P
+const Vertex g_PointsP[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W0, H2, 0 } };
+const Line g_LinesP[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 } };
+const Mesh g_MeshP = { g_PointsP, numberof(g_PointsP), g_LinesP, numberof(g_LinesP) };
+
+//.............................................................................
+//	R
+const Vertex g_PointsR[] = { { W0, H0, 0 }, { W0, H4, 0 }, { W2, H4, 0 }, { W4, H3, 0 }, { W2, H2, 0 }, { W4, H0, 0 }, { W0, H2, 0 } };
+const Line g_LinesR[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 4, 6 } };
+const Mesh g_MeshR = { g_PointsR, numberof(g_PointsR), g_LinesR, numberof(g_LinesR) };
+
+//.............................................................................
+//	Y
+const Vertex g_PointsY[] = { { W0, H0, 0 }, { W4, H4, 0 }, { W0, H4, 0 }, { W2, H2, 0 } };
+const Line g_LinesY[] = { { 0, 1 }, { 2, 3 } };
+const Mesh g_MeshY = { g_PointsY, numberof(g_PointsY), g_LinesY, numberof(g_LinesY) };
+
+//.............................................................................
+//	W
+const Vertex g_PointsW[] = { { W0, H4, 0 }, { W1, H0, 0 }, { W2, H2, 0 }, { W3, H0, 0 }, { W4, H4, 0 } };
+const Line g_LinesW[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }  };
+const Mesh g_MeshW = { g_PointsW, numberof(g_PointsW), g_LinesW, numberof(g_LinesW) };
+
+//.............................................................................
+//	W
+const Vertex g_PointsX[] = { { W0, H0, 0 }, { W4, H4, 0 }, { W0, H4, 0 }, { W4, H0, 0 } };
+const Line g_LinesX[] = { { 0, 1 }, { 2, 3 }  };
+const Mesh g_MeshX = { g_PointsX, numberof(g_PointsX), g_LinesX, numberof(g_LinesX) };
+
+//.............................................................................
+//	0
+const Vertex g_Points0[] = { { W0, H1, 0 }, { W0, H3, 0 }, { W1, H4, 0 }, { W3, H4, 0 }, { W4, H3, 0 }, { W4, H1, 0 }, { W3, H0, 0 }, { W1, H0, 0 } };
+const Line g_Lines0[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 0 }  };
+const Mesh g_Mesh0 = { g_Points0, numberof(g_Points0), g_Lines0, numberof(g_Lines0) };
+
+//.............................................................................
+//	2
+const Vertex g_Points2[] = { { W4, H0, 0 }, { W0, H0, 0 }, { W4, H3, 0 }, { W3, H4, 0 }, { W1, H4, 0 }, { W0, H3, 0 } };
+const Line g_Lines2[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }  };
+const Mesh g_Mesh2 = { g_Points2, numberof(g_Points2), g_Lines2, numberof(g_Lines2) };
+
+//.............................................................................
+//	5
+const Vertex g_Points5[] = { { W0, H0, 0 }, { W2, H0, 0 }, { W4, H1, 0 }, { W2, H2, 0 }, { W0, H2, 0 }, { W0, H4, 0 }, { W4, H4, 0 } };
+const Line g_Lines5[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 5 }, { 5, 6 }  };
+const Mesh g_Mesh5 = { g_Points5, numberof(g_Points5), g_Lines5, numberof(g_Lines5) };
+
+//.............................................................................
+//	Cube
+const Vertex g_PointsCube[] = { { -16, -16, -16 }, { -16, 16, -16 }, { 16, 16, -16 }, { 16, -16, -16 }, { -16, -16, 16 }, { -16, 16, 16 }, { 16, 16, 16 }, { 16, -16, 16 }};
+const Line g_LinesCube[] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 }, { 0, 4 }, { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }   };
+const Mesh g_MeshCube = { g_PointsCube, numberof(g_PointsCube), g_LinesCube, numberof(g_LinesCube) };
 
 // Snow flakes
 #include "content/sprt_snow.h"
@@ -159,13 +307,6 @@ Vertex g_CurrentVertex;
 
 // Demo
 u8 g_DemoState = STATE_CUBE_INIT;
-u8 g_DemoCount = 0;
-u8 g_ObjIdx = 0;
-u8 g_ObjNum = 0;
-bool g_Clear = TRUE;
-u8 g_CurFrame = 0;
-u8 g_PrevFrame = 0;
-u8 g_Color;
 
 //=============================================================================
 // FUNCTIONS
@@ -475,7 +616,7 @@ void InitializeSprite()
 	VDP_LoadSpritePattern(g_Sprites, 0, sizeof(g_Sprites) / 8);
 	VDP_SetSpriteExUniColor(0,  0, 255, 32, NY_COLOR_GRAY3);
 	VDP_SetSpriteExUniColor(1, 16, 255, 36, NY_COLOR_GRAY3);
-	loop(j, SPRITE_SNOW_NUM)
+	loop(j, 30)
 	{
 		struct VDP_Sprite* sprt = &g_SpriteData0[j];
 		sprt->X = Math_GetRandom8();
@@ -495,7 +636,7 @@ void UpdateSprite()
 {
 	u8 offset = (u8)(g_FrameCount >> 1);
 	struct VDP_Sprite* sprt = g_SpriteData0;
-	loop(i, SPRITE_SNOW_NUM)
+	loop(i, 30)
 	{
 		sprt->X += g_FallOffset[offset & 0x3F];
 		offset += 2;
@@ -504,14 +645,14 @@ void UpdateSprite()
 			sprt->Y = 240; // 256 - 16
 		sprt++;
 	}
-	VDP_WriteVRAM((const u8*)g_SpriteData0, g_SpriteAtributeLow + 8, g_SpriteAtributeHigh, SPRITE_SNOW_NUM * 4);
+	VDP_WriteVRAM((const u8*)g_SpriteData0, g_SpriteAtributeLow + 8, g_SpriteAtributeHigh, 30 * 4);
 }
 
 //-----------------------------------------------------------------------------
 // Program entry point
 void main()
 {
-// DEBUG_INIT();
+DEBUG_INIT();
 
 	// Initialize screen
 	VDP_SetMode(VDP_MODE_SCREEN5);
@@ -526,10 +667,10 @@ void main()
 	VDP_SetPalette(g_Palette);
 
 	// Initialize font
-	Print_SetBitmapFont(g_Font_MGL_Sample6);
-	Print_SetColor(NY_COLOR_GRAY3, NY_COLOR_TRANSPARENT);
-	// Print_DrawTextAt(256 - 6 * 6, 0, MSX_GL);
-	// Print_DrawTextAt(256 - 6 * 6, 256, MSX_GL);
+	// Print_SetBitmapFont(g_Font_MGL_Sample6);
+	// Print_SetColor(NY_COLOR_GRAY3, NY_COLOR_TRANSPARENT);
+	// Print_DrawTextAt(0, 0, MSX_GL);
+	// Print_DrawTextAt(0, 256, MSX_GL);
 
 	Object obj[] = {
 		{ 0, { 0, 0, 224 }, { 0, 0, 0 }, &g_MeshX, Vector_RotateXYZ },
@@ -548,16 +689,13 @@ void main()
 
 		{ 11, { -87, 0, 224 }, { 0, 0, 0 }, &g_MeshN, Vector_RotateX },
 		{ 12, { -62, 0, 224 }, { 0, 0, 0 }, &g_MeshE, Vector_RotateX },
-		{ 13, { -37, 0, 224 }, { 0, 0, 0 }, &g_MeshW, Vector_RotateX },
+		{ 13, { -32, 0, 224 }, { 0, 0, 0 }, &g_MeshW, Vector_RotateX },
 
 		{ 14, {  13, 0, 224 }, { 0, 0, 0 }, &g_MeshY, Vector_RotateX },
 		{ 15, {  38, 0, 224 }, { 0, 0, 0 }, &g_MeshE, Vector_RotateX },
 		{ 16, {  63, 0, 224 }, { 0, 0, 0 }, &g_MeshA, Vector_RotateX },
 		{ 17, {  88, 0, 224 }, { 0, 0, 0 }, &g_MeshR, Vector_RotateX },
 
-		{ 18, {  94, 110, 64 }, { 0, 0, 0 }, &g_MeshM, Vector_RotateX },
-		{ 19, { 106, 110, 64 }, { 0, 0, 0 }, &g_MeshS, Vector_RotateX },
-		{ 20, { 118, 110, 64 }, { 0, 0, 0 }, &g_MeshX, Vector_RotateX },
 	};
 	loop(i, numberof(obj))
 		Object_Init(&obj[i]);
@@ -575,7 +713,12 @@ void main()
 	LVGM_Play(g_lVGM_psg_honotori_09, TRUE);
 	g_MusicPlay = TRUE;
 
-	// Vector pos = { 0, 0, 64};
+	Vector pos = { 0, 0, 64};
+	u8 objIdx = 0;
+	u8 objNum = 0;
+	u8 count = 0;
+	u8 prevFrame = 0;
+	bool bClear = TRUE;
 	while(1)
 	{
 		WaitVBlank(); // Wait for V-Blank interruption signal
@@ -588,60 +731,62 @@ LoopStart:
 		// Update sprites
 		UpdateSprite();
 
-		// u8 row8 = Keyboard_Read(8);
-		// if (IS_KEY_PRESSED(row8, KEY_RIGHT))
-		// 	pos.x += 2;
-		// else if (IS_KEY_PRESSED(row8, KEY_LEFT))
-		// 	pos.x -= 2;
-		// if (IS_KEY_PRESSED(row8, KEY_UP))
-		// 	pos.y += 2;
-		// else if (IS_KEY_PRESSED(row8, KEY_DOWN))
-		// 	pos.y -= 2;
-		// if (IS_KEY_PRESSED(row8, KEY_DEL))
-		// 	pos.z += 2;
-		// else if (IS_KEY_PRESSED(row8, KEY_HOME))
-		// 	pos.z -= 2;
+		u8 row8 = Keyboard_Read(8);
+		if (IS_KEY_PRESSED(row8, KEY_RIGHT))
+			pos.x += 2;
+		else if (IS_KEY_PRESSED(row8, KEY_LEFT))
+			pos.x -= 2;
+		if (IS_KEY_PRESSED(row8, KEY_UP))
+			pos.y += 2;
+		else if (IS_KEY_PRESSED(row8, KEY_DOWN))
+			pos.y -= 2;
+		if (IS_KEY_PRESSED(row8, KEY_DEL))
+			pos.z += 2;
+		else if (IS_KEY_PRESSED(row8, KEY_HOME))
+			pos.z -= 2;
 
 // DEBUG_PRINT("Pos: %i, %i, %i\n", pos.x, pos.y, pos.z);
 
 		// Clear 3d vector
 		Object* o;
-		if (g_Clear)
+		if (bClear)
 		{
-			o = &obj[g_ObjIdx];
-			loop(i, g_ObjNum)
+			o = &obj[objIdx];
+			loop(i, objNum)
 			{
 				Object_Clear(o);
 				o++;
 			}
 		}
 
-		g_CurFrame = (u8)g_FrameCount;
-		bool bBlink = g_CurFrame & 0b0100000;
-		g_Color = bBlink ? NY_COLOR_RED1 : NY_COLOR_GREEN1;
-		VDP_SetPaletteEntry(NY_COLOR_BLINK, bBlink ? RGB16_From32B(0xFF4040) : RGB16_From32B(0x40FF40));
+		u8 frame = (u8)g_FrameCount;
+		bool bBlink = frame & 0b0100000;
+		u8 color = bBlink ? NY_COLOR_RED1 : NY_COLOR_GREEN1;
+		VDP_SetPaletteEntry(NY_COLOR_BLINK, bBlink ? RGB16_From32B(0xFF8080) : RGB16_From32B(0x80FF80));
+
+DEBUG_PRINT("Frame: %i\n", frame);
 
 		switch(g_DemoState)
 		{
 
 		//-------- CUBE -------- 
 		case STATE_CUBE_INIT:
-			g_ObjIdx = 0;
-			g_ObjNum = 2;
-			g_DemoCount = 224;
+			objIdx = 0;
+			objNum = 2;
+			count = 224;
 			g_DemoState = STATE_CUBE_ZOOM;
 			break;
 		case STATE_CUBE_ZOOM:
-			g_DemoCount--;
-			if (g_DemoCount < 32)
+			count--;
+			if (count < 32)
 			{
 				g_DemoState = STATE_CUBE_WAIT;
-				g_DemoCount = 120;
+				count = 120;
 			}	
 			break;
 		case STATE_CUBE_WAIT:
-			g_DemoCount--;
-			if (g_DemoCount == 0)
+			count--;
+			if (count == 0)
 			{
 				g_DemoState = STATE_HAPPY_INIT;
 				goto LoopStart;
@@ -650,203 +795,153 @@ LoopStart:
 
 		//-------- HAPPY -------- 
 		case STATE_HAPPY_INIT:
-			g_ObjIdx = 2;
-			g_ObjNum = 5;
-			g_DemoCount = 224;
+			objIdx = 2;
+			objNum = 5;
+			count = 224;
 			g_DemoState = STATE_HAPPY_ZOOM;
-			break;
 		case STATE_HAPPY_ZOOM:
-			g_DemoCount -= 2;
-			if (g_DemoCount < 64)
+			count -= 2;
+			if (count < 64)
 				g_DemoState = STATE_HAPPY_WAIT1;
 			break;
 		case STATE_HAPPY_WAIT1:
-			if (g_CurFrame < g_PrevFrame)
+			if (frame < prevFrame)
 			{
-				g_DemoCount = 2;
 				g_DemoState = STATE_HAPPY_WAIT2;
+				count = 4;
+				bClear = FALSE;
 			}
 			break;
 		case STATE_HAPPY_WAIT2:
-			g_CurFrame = 0;
-			g_Color = NY_COLOR_BLINK;
-			g_DemoCount--;
-			if (g_DemoCount == 0)
-			{
-				g_Clear = FALSE;
-				g_DemoCount = 2;
-				g_DemoState = STATE_HAPPY_WAIT3;
-			}
-			break;
-		case STATE_HAPPY_WAIT3:
-			g_CurFrame = 0;
-			g_Color = NY_COLOR_BLINK;
-			g_DemoCount--;
-			if (g_DemoCount == 0)
+			frame = 0;
+			color = NY_COLOR_BLINK;
+			count--;
+			if (count == 0)
 				g_DemoState = STATE_2025_INIT;
 			break;
 
 		//-------- 2025 -------- 
 		case STATE_2025_INIT:
-			g_ObjIdx = 7;
-			g_ObjNum = 4;
-			g_DemoCount = 224;
+			objIdx = 7;
+			objNum = 4;
+			count = 224;
 			g_DemoState = STATE_2025_ZOOM;
 			break;
 		case STATE_2025_ZOOM:
-			g_Clear = TRUE;
-			g_DemoCount -= 2;
-			if (g_DemoCount < 64)
+			bClear = TRUE;
+			count -= 2;
+			if (count < 64)
 			{
 				g_DemoState = STATE_2025_WAIT1;
-				g_DemoCount = 209;
+				count = 209;
 			}
 			break;
 		case STATE_2025_WAIT1:
-			if (g_CurFrame < g_PrevFrame)
+			if (frame < prevFrame)
 			{
-				g_DemoCount = 2;
 				g_DemoState = STATE_2025_WAIT2;
+				count = 4;
+				bClear = FALSE;
 			}
 			break;
 		case STATE_2025_WAIT2:
-			g_CurFrame = 0;
-			g_Color = NY_COLOR_BLINK;
-			g_DemoCount--;
-			if (g_DemoCount == 0)
-			{
-				g_Clear = FALSE;
-				g_DemoCount = 2;
-				g_DemoState = STATE_2025_WAIT3;
-			}
-			break;
-		case STATE_2025_WAIT3:
-			g_CurFrame = 0;
-			g_Color = NY_COLOR_BLINK;
-			g_DemoCount--;
-			if (g_DemoCount == 0)
+			frame = 0;
+			color = NY_COLOR_BLINK;
+			count--;
+			if (count == 0)
 				g_DemoState = STATE_NEWYEAR_INIT;
 			break;
 
 		//-------- NEWYEAR -------- 
 		case STATE_NEWYEAR_INIT:
-			g_ObjIdx = 11;
-			g_ObjNum = 7;
-			g_DemoCount = 224;
+			objIdx = 11;
+			objNum = 7;
+			count = 224;
 			g_DemoState = STATE_NEWYEAR_ZOOM;
 			break;
 		case STATE_NEWYEAR_ZOOM:
-			g_Clear = TRUE;
-			g_DemoCount -= 2;
-			if (g_DemoCount < 64)
+			bClear = TRUE;
+			count -= 2;
+			if (count < 64)
 			{
 				g_DemoState = STATE_NEWYEAR_WAIT1;
-				g_DemoCount = 209;
+				count = 209;
 			}
 			break;
 		case STATE_NEWYEAR_WAIT1:
-			if (g_CurFrame < g_PrevFrame)
+			if (frame < prevFrame)
 			{
-				g_DemoCount = 2;
 				g_DemoState = STATE_NEWYEAR_WAIT2;
+				count = 4;
+				bClear = FALSE;
 			}
 			break;
 		case STATE_NEWYEAR_WAIT2:
-			g_CurFrame = 0;
-			g_Color = NY_COLOR_BLINK;
-			g_DemoCount--;
-			if (g_DemoCount == 0)
+			frame = 0;
+			color = NY_COLOR_BLINK;
+			count--;
+			if (count == 0)
 			{
-				g_Clear = FALSE;
-				g_DemoCount = 2;
-				g_DemoState = STATE_NEWYEAR_WAIT3;
-			}
-			break;
-		case STATE_NEWYEAR_WAIT3:
-			g_CurFrame = 0;
-			g_Color = NY_COLOR_BLINK;
-			g_DemoCount--;
-			if (g_DemoCount == 0)
-			{
-				g_ObjIdx = 18;
-				g_ObjNum = 3;
-				g_DemoCount = 1;
-				g_DemoState = STATE_END;
-			}
+				objNum = 0;
+				g_DemoState = STATE_FINAL;
+			}	
 			break;
 
-		//-------- END --------
-		case STATE_END:
-			if (g_DemoCount)
-				g_DemoCount--;
-			if (g_DemoCount == 0)
-			{
-				g_Clear = TRUE;
-			}
+		//-------- FINAL --------
+		case STATE_FINAL:
 			break;
 		}
 
 		// Draw 3d vector
-		o = &obj[g_ObjIdx];
-		loop(i, g_ObjNum)
+		o = &obj[objIdx];
+		loop(i, objNum)
 		{
 			switch(g_DemoState)
 			{
 			//-------- CUBE --------
 			case STATE_CUBE_ZOOM:
-				o->Position.z = g_DemoCount;
+				o->Position.z = count;
 			case STATE_CUBE_WAIT:
-				o->Rotation.x = g_CurFrame;
-				o->Rotation.y = g_CurFrame;
-				o->Rotation.z = g_CurFrame;
+				o->Rotation.x = frame;
+				o->Rotation.y = frame;
+				o->Rotation.z = frame;
 				break;
 
 			//-------- HAPPY --------
 			case STATE_HAPPY_ZOOM:
-				o->Position.z = g_DemoCount;
+				o->Position.z = count;
 			case STATE_HAPPY_WAIT1:
-				o->Rotation.z = g_CurFrame;
+				o->Rotation.z = frame;
 				break;
 			case STATE_HAPPY_WAIT2:
-			case STATE_HAPPY_WAIT3:
 				o->Rotation.z = 0;
 				break;
 
 			//-------- 2025 --------
 			case STATE_2025_ZOOM:
-				o->Position.z = g_DemoCount;
+				o->Position.z = count;
 			case STATE_2025_WAIT1:
-				o->Rotation.y = g_CurFrame;
+				o->Rotation.y = frame;
 				break;
 			case STATE_2025_WAIT2:
-			case STATE_2025_WAIT3:
 				o->Rotation.y = 0;
 				break;
 
 			//-------- NEWYEAR --------
 			case STATE_NEWYEAR_ZOOM:
-				o->Position.z = g_DemoCount;
+				o->Position.z = count;
 			case STATE_NEWYEAR_WAIT1:
-				o->Rotation.x = g_CurFrame;
+				o->Rotation.x = frame;
 				break;
 			case STATE_NEWYEAR_WAIT2:
-			case STATE_NEWYEAR_WAIT3:
-				o->Rotation.x = 0;
-				break;
-
-			//-------- END --------
-			case STATE_END:
-				o->Position.z = 64 + g_Sinus256[(g_FrameCount << 1) & 0xFF] / 8;
 				o->Rotation.x = 0;
 				break;
 			}
 
-
-
-			Object_Draw(o, g_Color);
+			Object_Draw(o, color);
 			o++;
 		}
 
-		g_PrevFrame = g_CurFrame;
+		prevFrame = frame;
 	}
 }
