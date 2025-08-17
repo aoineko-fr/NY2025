@@ -94,9 +94,11 @@ Machine = "2";
 //   - ROM_KONAMI_SCC   .rom    Konami MegaROM SCC (aka Konami5): 8 KB segments for a total of 64 KB to 2 MB
 //   - ROM_NEO8         .rom    NEO-8: 8 KB segments for a total of 1 MB to 32 MB
 //   - ROM_NEO16        .rom    NEO-16: 16 KB segments for a total of 1 MB to 64 MB
+//   - ROM_YAMANOOTO    .rom    Yamanooto: 8 KB segments for a total up to 8 MB
+//   - ROM_ASCII16X     .rom    ASCII16-X: 16 KB segments for a total up to 64 MB
 Target = "ROM_ASCII8";
 
-//-- ROM mapper total size in KB (number). Must be a multiple of 8 or 16 depending on the mapper type (from 64 to 4096)
+//-- ROM mapper total size in KB (number). Must be a multiple of 8 or 16 depending on the mapper type (from 64 to 4096 for legacy mappers; can be up to 65536 for NEO-16 mapper)
 ROMSize = 256;
 
 //-- Check for ROM boot skipping if a given key is pressed (boolean)
@@ -178,10 +180,10 @@ AppID = "25";
 //*******************************************************************************
 
 //-- Force to generate MSXgl static library even if 'msxgl.lib' already exist (boolean)
-BuildLibrary = false;
+BuildLibrary = true;
 
 //-- Prepare program for debug (boolean)
-// Debug = false;
+Debug = true;
 
 //-- Move debug symbols to deployement folder (boolean)
 DebugSymbols = true;
@@ -207,7 +209,7 @@ DebugSymbols = true;
 //   - Optimized	   50000
 //   - Ultra		  200000
 //   - Insane		10000000
-CompileComplexity = "Ultra";
+// CompileComplexity = "Ultra";
 
 //-- Additionnal compilation options (string)
 // CompileOpt = "";
@@ -226,6 +228,9 @@ CompileComplexity = "Ultra";
 
 //-- Additionnal options of Hex to Binary convertor (string)
 // HexBinOpt = "";
+
+//-- Generate Clang compatible Compilation database (boolean)
+// GenCompileDB = false;
 
 //-- Command lines to be executed before the build process (array)
 // PreBuildScripts = [];
@@ -324,6 +329,7 @@ Verbose = true;
 // EmulOPL4     = false;				//-- Add OPL4 extension (boolean)
 // EmulPSG2     = false;				//-- Add second PSG extension (boolean)
 // EmulV9990    = false;				//-- Add V9990 video-chip extension (boolean)
+// EmulRAM      = false;				//-- Add mapped-RAM extension (boolean)
 
 //-------------------------------------------------------------------------------
 // Input options
