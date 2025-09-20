@@ -352,7 +352,7 @@ void VDP_InterruptHandler()
 // V-blank interrupt andler
 void WaitVBlank()
 {
-	while(!g_VSynch) {}
+	while (!g_VSynch) {}
 	g_VSynch = FALSE;
 	g_LoopCount++;
 }
@@ -524,7 +524,7 @@ void Object_Draw(Object* obj, u8 color)
 		g_CurrentVertex.z = pt->z;
 
 		obj->Transform(&g_CurrentVertex, &obj->Rotation);
-		if(g_CurrentVertex.z > 0)
+		if (g_CurrentVertex.z > 0)
 			proj->z = 1;
 		else
 			proj->z = 0;
@@ -719,7 +719,7 @@ DEBUG_INIT();
 	u8 count = 0;
 	u8 prevFrame = 0;
 	bool bClear = TRUE;
-	while(1)
+	while (1)
 	{
 		WaitVBlank(); // Wait for V-Blank interruption signal
 
@@ -766,7 +766,7 @@ LoopStart:
 
 DEBUG_PRINT("Frame: %i\n", frame);
 
-		switch(g_DemoState)
+		switch (g_DemoState)
 		{
 
 		//-------- CUBE -------- 
@@ -896,7 +896,7 @@ DEBUG_PRINT("Frame: %i\n", frame);
 		o = &obj[objIdx];
 		loop(i, objNum)
 		{
-			switch(g_DemoState)
+			switch (g_DemoState)
 			{
 			//-------- CUBE --------
 			case STATE_CUBE_ZOOM:
